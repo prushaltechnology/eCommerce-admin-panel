@@ -5,7 +5,7 @@ import OrderTrackingModal from '../../components/modals/OrderTrackingModal';
 import useBulkOrders from '../../hooks/useBulkOrdersEnquiry';
 import usePermissions from '../../hooks/usePermissions';
 import BulkOrderDetailsModal from './components/BulkOrderDetailsModal';
-import BulkOrdersEnquiryTable from './components/bulkordersenquirytable';
+import BulkOrdersEnquiryTable from './components/BulkOrdersEnquiryTable';
 
 
 const { Title } = Typography;

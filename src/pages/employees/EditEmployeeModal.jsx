@@ -94,12 +94,18 @@ const EditEmployeeModal = ({
                                     required: true,
                                     message: 'Phone is required',
                                 },
+                                {
+                                    pattern: /^[0-9]{10}$/,
+                                    message: 'Phone number must be exactly 10 digits',
+                                },
                             ]}
                         >
-                            <Input placeholder="Enter phone number" />
+                            <Input
+                                placeholder="9876543210"
+                                maxLength={10}
+                            />
                         </Form.Item>
                     </Col>
-
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="roleName"

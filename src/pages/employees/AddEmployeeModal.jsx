@@ -99,9 +99,16 @@ const AddEmployeeModal = ({
                                     required: true,
                                     message: 'Phone is required',
                                 },
+                                {
+                                    pattern: /^[0-9]{10}$/,
+                                    message: 'Phone number must be exactly 10 digits',
+                                },
                             ]}
                         >
-                            <Input placeholder="9876543210" />
+                            <Input
+                                placeholder="9876543210"
+                                maxLength={10}
+                            />
                         </Form.Item>
                     </Col>
 
