@@ -19,6 +19,7 @@ export const getTransactions = async ({ first = 10, after = null, query = null }
             razorpayOrderId
             razorpayPaymentId
             createdAt
+            refundAmount
             order {
               orderNumber
               customerName

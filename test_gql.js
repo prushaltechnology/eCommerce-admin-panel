@@ -19,7 +19,7 @@ async function run() {
   `;
 
   try {
-    const response = await fetch('http://192.168.1.55:8000/graphql/', {
+    const response = await fetch('https://192.168.1.55:8000/graphql/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })

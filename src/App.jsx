@@ -29,6 +29,7 @@ import Delivery from "./pages/Delivery";
 import Employees from "./pages/Employees";
 import Stock from "./pages/Stock";
 import Transactions from "./pages/Transactions";
+import RefundPage from "./pages/RefundPage";
 
 export default function App() {
   return (
@@ -57,6 +58,8 @@ export default function App() {
           {/* Other Routes */}
 
           <Route path="transactions" element={<Transactions />} />
+          <Route path="refunds" element={<RefundPage />} />
+          
           <Route path="delivery" element={<Delivery />} />
 
           <Route path="customers" element={<Customers />} />

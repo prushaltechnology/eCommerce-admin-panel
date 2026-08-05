@@ -6,7 +6,7 @@ import useBulkOrders from '../../hooks/useBulkOrdersEnquiry';
 import usePermissions from '../../hooks/usePermissions';
 import BulkOrderDetailsModal from './components/BulkOrderDetailsModal';
 import BulkOrdersEnquiryTable from './components/BulkOrdersEnquiryTable';
-
+import BulkOrderTrackingModal from '../../components/modals/BulkOrderTrackingModal';
 
 const { Title } = Typography;
 
@@ -25,8 +25,22 @@ const BulkOrderEnquiries = () => {
     // ── Detail modal state ────────────────────────────────────────────────────
     const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [selectedEnquiry, setSelectedEnquiry] = useState(null);
-    const [newStatus, setNewStatus] = useState('');
+    // const [newStatus, setNewStatus] = useState('');
     const [statusNote, setStatusNote] = useState('');
+
+    const [bulkOrderModalOpen, setBulkOrderModalOpen] = useState(false);
+    const [selectedBulkOrder, setSelectedBulkOrder] = useState(null);
+
+    const [newStatus, setNewStatus] = useState("pending");
+    const [adminMessage, setAdminMessage] = useState("");
+
+    const handleOpenBulkOrderModal = (order) => {
+        setSelectedBulkOrder(order);
+        setNewStatus(order.status);
+        setAdminMessage(order.adminMessage || "");
+        setBulkOrderModalOpen(true);
+    };
+
 
     // ── Tracking modal state ──────────────────────────────────────────────────
     const [trackingModalVisible, setTrackingModalVisible] = useState(false);
@@ -46,34 +60,75 @@ const BulkOrderEnquiries = () => {
     const handleStatusUpdate = async () => {
         if (!canManageOrders) return false;
         if (!selectedEnquiry) return false;
+
         const res = await changeBulkOrderStatus(
             selectedEnquiry.id,
             newStatus,
-            selectedEnquiry.bulkOrderDetails || ''   // preserve existing bulkOrderDetails
+            selectedEnquiry.bulkOrderDetails || '',
+            adminMessage
         );
+
         if (res.success) {
             setDetailModalVisible(false);
             setTrackingModalVisible(false);
             return true;
         }
+
         return false;
     };
 
-    // ── Open detail modal ─────────────────────────────────────────────────────
     const handleViewDetails = (enquiry) => {
-        setSelectedEnquiry(enquiry);
-        setNewStatus(enquiry.status || 'pending');
-        setStatusNote('');
-        setDetailModalVisible(true);
-    };
+    setSelectedEnquiry(enquiry);
+    setNewStatus(enquiry.status || 'pending');
+    setAdminMessage(enquiry.adminMessage || '');
+    setDetailModalVisible(true);
+};
 
-    // ── Open tracking modal ───────────────────────────────────────────────────
+const handleBulkOrderStatusUpdate = async () => {
+    if (!selectedBulkOrder) return false;
+
+    const response = await changeBulkOrderStatus(
+        selectedBulkOrder.id,
+        newStatus,
+        selectedBulkOrder.bulkOrderDetails || '',
+        adminMessage
+    );
+
+    if (response.success) {
+        await fetchEnquiries(searchText || null);
+        setBulkOrderModalOpen(false);
+        return true;
+    }
+
+    return false;
+};
+    // ── Open detail modal ─────────────────────────────────────────────────────
     const handleTrackOrder = (enquiry) => {
         setSelectedEnquiry(enquiry);
         setNewStatus(enquiry.status || 'pending');
-        setStatusNote('');
+        setAdminMessage(enquiry.adminMessage || '');
         setTrackingModalVisible(true);
     };
+
+
+    // const handleBulkOrderStatusUpdate = async () => {
+    //     if (!selectedBulkOrder) return false;
+
+    //     const response = await changeBulkOrderStatus(
+    //         selectedBulkOrder.id,
+    //         newStatus,
+    //         selectedBulkOrder.bulkOrderDetails || "",
+    //         adminMessage
+    //     );
+
+    //     if (response.success) {
+    //         await fetchEnquiries(searchText || null);
+    //         setBulkOrderModalOpen(false);
+    //         return true;
+    //     }
+
+    //     return false;
+    // };
 
     // ── Client-side filters ───────────────────────────────────────────────────
     const filteredEnquiries = enquiries.filter((enquiry) => {
@@ -146,7 +201,7 @@ const BulkOrderEnquiries = () => {
                     nextCursor={nextCursor}
                     enquiries={filteredEnquiries}
                     onViewDetails={handleViewDetails}
-                    onTrackOrder={handleTrackOrder}
+                    onTrackOrder={handleOpenBulkOrderModal}
                     onLoadMore={(cursor) =>
                         fetchEnquiries(searchText, cursor, true)
                     }
@@ -160,8 +215,8 @@ const BulkOrderEnquiries = () => {
                 onCancel={() => setDetailModalVisible(false)}
                 newStatus={newStatus}
                 setNewStatus={setNewStatus}
-                statusNote={statusNote}
-                setStatusNote={setStatusNote}
+                adminMessage={adminMessage}
+                setAdminMessage={setAdminMessage}
                 onStatusUpdate={handleStatusUpdate}
                 updateLoading={updateLoading}
                 canUpdateStatus={canManageOrders}
@@ -169,19 +224,16 @@ const BulkOrderEnquiries = () => {
             />
 
             {/* ── Tracking Modal (reused as-is) ──────────────────────────────────── */}
-            <OrderTrackingModal
-                open={trackingModalVisible}
-                order={selectedEnquiry}           // tracking modal uses order.status internally
-                trackingLoading={false}           // no tracking API for bulk orders
-                trackingData={[]}                 // no timeline data — shows status stepper only
-                onCancel={() => setTrackingModalVisible(false)}
+            <BulkOrderTrackingModal
+                open={bulkOrderModalOpen}
+                order={selectedBulkOrder}
+                onCancel={() => setBulkOrderModalOpen(false)}
                 newStatus={newStatus}
                 setNewStatus={setNewStatus}
-                statusNote={statusNote}
-                setStatusNote={setStatusNote}
-                onStatusUpdate={handleStatusUpdate}
+                adminMessage={adminMessage}
+                setAdminMessage={setAdminMessage}
+                onStatusUpdate={handleBulkOrderStatusUpdate}
                 statusUpdateLoading={updateLoading}
-                canUpdateStatus={canManageOrders}
             />
         </div>
     );

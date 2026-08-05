@@ -682,7 +682,6 @@ export const getAllNewsletterSubscribers = async ({ first = 15, after = null } =
   }
 };
 
-
 // ───────────────── STORE SETTINGS ─────────────────
 
 export const getStoreSettings = async () => {
@@ -695,6 +694,8 @@ export const getStoreSettings = async () => {
           storeAddress
           contactNo
           storefrontTheme
+          advanceBookingStartTime
+          advanceBookingEndTime
         }
       }
     `);
@@ -721,6 +722,8 @@ export const updateStoreSettings = async (values) => {
         $storeAddress: String
         $contactNo: String
         $storefrontTheme: GenericScalar
+        $advanceBookingStartTime: Time
+        $advanceBookingEndTime: Time
       ) {
         updateStoreSettings(
           storeName: $storeName
@@ -728,6 +731,8 @@ export const updateStoreSettings = async (values) => {
           storeAddress: $storeAddress
           contactNo: $contactNo
           storefrontTheme: $storefrontTheme
+          advanceBookingStartTime: $advanceBookingStartTime
+          advanceBookingEndTime: $advanceBookingEndTime
         ) {
           storeSettings {
             storeName
@@ -735,6 +740,8 @@ export const updateStoreSettings = async (values) => {
             storeAddress
             contactNo
             storefrontTheme
+            advanceBookingStartTime
+            advanceBookingEndTime
           }
         }
       }

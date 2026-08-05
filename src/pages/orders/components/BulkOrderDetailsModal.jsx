@@ -13,14 +13,16 @@ const getProductImage = (product) => {
         : `${import.meta.env.VITE_GRAPHQL_URI.replace('/graphql/', '').replace('/graphql', '')}/media/${validImage.image}`;
 };
 
+// console.log(enquiry)
+
 const BulkOrderDetailsModal = ({
     open,
     enquiry,
     onCancel,
     newStatus,
     setNewStatus,
-    statusNote,
-    setStatusNote,
+    adminMessage,
+    setAdminMessage,
     onStatusUpdate,
     updateLoading = false,
 }) => {
@@ -65,11 +67,24 @@ const BulkOrderDetailsModal = ({
                                     <strong>Name:</strong>{' '}
                                     {enquiry.placedByUser?.firstName} {enquiry.placedByUser?.lastName}
                                 </p>
+                                <p>
+                                    <strong>Contact:</strong>{' '}
+                                    {enquiry.placedByUser?.phone || 'N/A'}
+                                </p>
+                                 <p>
+                                    <strong>email:</strong>{' '}
+                                    {enquiry.placedByUser?.email}
+                                </p>
+
                             </Col>
                             <Col span={12}>
                                 <p><strong>Bulk Order Details:</strong></p>
                                 <p style={{ color: '#666', fontSize: 13 }}>
                                     {enquiry.bulkOrderDetails || 'N/A'}
+                                </p>
+                                <p><strong>Address:</strong></p>
+                                 <p style={{ color: '#666', fontSize: 13 }}>
+                                    {enquiry.address || 'N/A'}
                                 </p>
                             </Col>
                         </Row>
@@ -81,6 +96,7 @@ const BulkOrderDetailsModal = ({
                             <Col span={12}>
                                 <p><strong>Enquiry ID:</strong> #{enquiry.id}</p>
                                 <p><strong>Date:</strong> {enquiry.createdAt ? dayjs(enquiry.createdAt).format('MMMM D, YYYY h:mm A') : '—'}</p>
+                                
                             </Col>
                             <Col span={12}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -88,23 +104,21 @@ const BulkOrderDetailsModal = ({
                                     <Select
                                         value={newStatus}
                                         onChange={setNewStatus}
-                                        style={{ width: 150 }}
+                                        style={{ width: 170 }}
                                         size="small"
                                     >
                                         <Option value="pending">Pending</Option>
                                         <Option value="confirmed">Confirmed</Option>
-                                        <Option value="processing">Processing</Option>
-                                        <Option value="completed">Completed</Option>
                                         <Option value="cancelled">Cancelled</Option>
                                     </Select>
                                 </div>
                                 <div style={{ marginTop: 8 }}>
                                     <Input.TextArea
                                         size="small"
-                                        placeholder="Add a note (optional)"
-                                        value={statusNote}
-                                        onChange={(e) => setStatusNote(e.target.value)}
-                                        rows={2}
+                                        placeholder="Admin message"
+                                        value={adminMessage}
+                                        onChange={(e) => setAdminMessage(e.target.value)}
+                                        rows={3}
                                     />
                                     <Button
                                         type="primary"

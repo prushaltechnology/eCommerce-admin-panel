@@ -4,7 +4,7 @@ import { onError } from '@apollo/client/link/error';
 
 // HTTP link to your GraphQL endpoint
 const httpLink = createHttpLink({
-  uri: import.meta.env.VITE_GRAPHQL_URI || 'http://192.168.1.40:8000/graphql/',
+  uri: import.meta.env.VITE_GRAPHQL_URI || 'https://192.168.1.40:8000/graphql/',
   // Add logging for debugging
   headers: {
     'Content-Type': 'application/json',

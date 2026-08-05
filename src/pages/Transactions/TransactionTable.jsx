@@ -72,6 +72,19 @@ export default function TransactionTable({
             render: (v) => <Text strong style={{ fontSize: 14 }}>{formatAmount(v)}</Text>,
         },
         {
+            title: "Refund Amount",
+            dataIndex: "refundAmount",
+            width: 130,
+            render: (v, record) =>
+                record.status === "REFUNDED" && parseFloat(v) > 0 ? (
+                    <Text strong style={{ fontSize: 14, color: "#cf1322" }}>
+                        -{formatAmount(v)}
+                    </Text>
+                ) : (
+                    <Text type="secondary">—</Text>
+                ),
+        },
+        {
             title: "Method",
             dataIndex: "paymentMethod",
             width: 140,
@@ -123,7 +136,7 @@ export default function TransactionTable({
                 dataSource={transactions}
                 loading={loading}
                 pagination={false}
-                scroll={{ x: 900 }}
+                scroll={{ x: 1030 }}
                 onRow={(record) => ({
                     onClick: () => onViewDetail(record),
                     style: { cursor: "pointer" },

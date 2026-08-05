@@ -1,6 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
-import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import OrderDetailsModal from '../../components/modals/OrderDetailsModal';
 import useCustomOrders from '../../hooks/useCustomOrders';
@@ -15,7 +14,7 @@ const CustomOrders = () => {
   const canManageOrders = canUpdate('order', 'custom_order');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateRange, setDateRange] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newStatus, setNewStatus] = useState('');
@@ -24,21 +23,34 @@ const CustomOrders = () => {
   //const [trackingLoading, setTrackingLoading] = useState(false);
   //const [trackingData, setTrackingData] = useState([]);
   const [manualOrderVisible, setManualOrderVisible] = useState(false);
-
-  const { orders, loading, fetchOrders, fetchMoreOrders, hasMore, updateOrder, ordersStats } = useCustomOrders();
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const {
+    orders,
+    loading,
+    fetchOrders,
+    fetchMoreOrders,
+    hasMore,
+    updateOrder,
+    cancelOrder,
+    ordersStats,
+  } = useCustomOrders();
   const [tableScrollLoading, setTableScrollLoading] = useState(false);
   const tableWrapperRef = useRef(null);
   const { Title } = Typography;
 
-
+  // Convert selected date to API-ready date string
+  const getDateParam = () => {
+    if (!selectedDate) return null;
+    return selectedDate.format('YYYY-MM-DD');
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchOrders(searchText || null);
+      fetchOrders(searchText || null, getDateParam());
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [fetchOrders, searchText]);
+  }, [fetchOrders, searchText, selectedDate]);
 
   useEffect(() => {
     const tableBody =
@@ -134,15 +146,21 @@ const CustomOrders = () => {
   //   }
   // };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    let matchesDate = true;
-    if (dateRange && dateRange.length === 2) {
-      const orderDate = dayjs(order.createdAt);
-      matchesDate = orderDate.isAfter(dateRange[0].startOf('day'))
-        && orderDate.isBefore(dateRange[1].endOf('day'));
+  const handleCancelOrder = async (order) => {
+    if (!canManageOrders || !order?.id) return;
+
+    try {
+      setCancellingOrderId(order.id);
+
+      await cancelOrder(order.id);
+    } finally {
+      setCancellingOrderId(null);
     }
-    return matchesStatus && matchesDate;
+  };
+
+  // Status filter is still client-side; date filtering is now handled by the backend
+  const filteredOrders = orders.filter((order) => {
+    return statusFilter === 'all' || order.status === statusFilter;
   });
 
   return (
@@ -196,10 +214,10 @@ const CustomOrders = () => {
       <SystemOrdersFilters
         searchText={searchText}
         statusFilter={statusFilter}
-        dateRange={dateRange}
+        selectedDate={selectedDate}
         onSearch={setSearchText}
         onStatusChange={setStatusFilter}
-        onDateChange={setDateRange}
+        onDateChange={setSelectedDate}
       />
 
       {/* TABLE CARD */}
@@ -233,8 +251,12 @@ const CustomOrders = () => {
             loading={loading}
             orders={filteredOrders}
             hasMore={hasMore}
+            tableScrollLoading={tableScrollLoading}
             onViewDetails={handleViewDetails}
-          //onTrackOrder={handleTrackOrder}
+            onCancelOrder={handleCancelOrder}
+            cancellingOrderId={cancellingOrderId}
+            canManageOrders={canManageOrders}
+            onLoadMore={fetchMoreOrders}
           />
 
           {hasMore && tableScrollLoading && (
@@ -302,7 +324,8 @@ const CustomOrders = () => {
             setManualOrderVisible(false);
 
             fetchOrders(
-              searchText || null
+              searchText || null,
+              getDateParam()
             );
           }}
         />

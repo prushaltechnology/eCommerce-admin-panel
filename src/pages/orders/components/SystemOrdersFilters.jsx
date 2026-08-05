@@ -2,12 +2,11 @@ import { DatePicker, Input, Select, Space } from 'antd';
 
 const { Search } = Input;
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 const SystemOrdersFilters = ({
   searchText,
   statusFilter,
-  dateRange,
+  selectedDate,
   onSearch,
   onStatusChange,
   onDateChange,
@@ -30,6 +29,7 @@ const SystemOrdersFilters = ({
       style={{ width: 150 }}
     >
       <Option value="all">All Status</Option>
+      <Option value="scheduled">Scheduled</Option>
       <Option value="pending">Pending</Option>
       <Option value="confirmed">Confirmed</Option>
       <Option value="dispatched">Dispatched</Option>
@@ -37,11 +37,13 @@ const SystemOrdersFilters = ({
       <Option value="cancelled">Cancelled</Option>
     </Select>
 
-    <RangePicker
+    <DatePicker
       size="small"
-      value={dateRange}
+      value={selectedDate}
       onChange={onDateChange}
       format="DD-MM-YYYY"
+      placeholder="Select date"
+      allowClear
     />
   </Space>
 );

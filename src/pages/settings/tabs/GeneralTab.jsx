@@ -6,10 +6,12 @@ import {
   Input,
   message,
   Row,
+  TimePicker,
   Upload,
 } from 'antd';
 
 import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 
 import {
   getStoreSettings,
@@ -37,6 +39,8 @@ const THEME_COLOR_FIELDS = [
   { key: 'destructive', label: 'Destructive' },
 ];
 
+const TIME_FORMAT = 'HH:mm:ss';
+
 const GeneralTab = () => {
 
   const [form] = Form.useForm();
@@ -60,6 +64,8 @@ const GeneralTab = () => {
       storeAddress,
       contactNo,
       storefrontTheme,
+      advanceBookingStartTime,
+      advanceBookingEndTime,
     } = res.settings;
 
     // Flatten theme keys into form values
@@ -67,6 +73,12 @@ const GeneralTab = () => {
       storeName,
       storeAddress,
       contactNo,
+      advanceBookingStartTime: advanceBookingStartTime
+        ? dayjs(advanceBookingStartTime, TIME_FORMAT)
+        : null,
+      advanceBookingEndTime: advanceBookingEndTime
+        ? dayjs(advanceBookingEndTime, TIME_FORMAT)
+        : null,
     };
 
     if (storefrontTheme && typeof storefrontTheme === 'object') {
@@ -112,6 +124,12 @@ const GeneralTab = () => {
         contactNo: values.contactNo,
         storeLogo: logoList[0]?.originFileObj || null,
         storefrontTheme, // pass as plain object — backend returns it as object too
+        advanceBookingStartTime: values.advanceBookingStartTime
+          ? values.advanceBookingStartTime.format(TIME_FORMAT)
+          : null,
+        advanceBookingEndTime: values.advanceBookingEndTime
+          ? values.advanceBookingEndTime.format(TIME_FORMAT)
+          : null,
       };
 
       const res = await updateStoreSettings(payload);
@@ -185,8 +203,47 @@ const GeneralTab = () => {
 
       </Card>
 
-      {/* ── Storefront Theme ────────────────────────────────────── */}
+      {/* ── Shop Timing ─────────────────────────────────────────── */}
       <Card
+        title="Shop Timing"
+        style={{ marginBottom: 20 }}
+        loading={loading}
+      >
+
+        <Row gutter={16}>
+
+          <Col span={12}>
+            <Form.Item
+              label="Shop Start Time"
+              name="advanceBookingStartTime"
+            >
+              <TimePicker
+                format={TIME_FORMAT}
+                style={{ width: '100%' }}
+                placeholder="Select start time"
+              />
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
+            <Form.Item
+              label="Shop End Time"
+              name="advanceBookingEndTime"
+            >
+              <TimePicker
+                format={TIME_FORMAT}
+                style={{ width: '100%' }}
+                placeholder="Select end time"
+              />
+            </Form.Item>
+          </Col>
+
+        </Row>
+
+      </Card>
+
+      {/* ── Storefront Theme ────────────────────────────────────── */}
+      {/* <Card
         title="Storefront Theme"
         style={{ marginBottom: 20 }}
         loading={loading}
@@ -220,7 +277,7 @@ const GeneralTab = () => {
 
         </Row>
 
-      </Card>
+      </Card> */}
 
       <SaveButton loading={loading}>
         Save Settings

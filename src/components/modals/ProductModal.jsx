@@ -51,17 +51,30 @@ const ProductModal = ({
   useEffect(() => {
     if (visible) {
       if (initialValues) {
-
         form.setFieldsValue({
           ...initialValues,
+
+          weight:
+            initialValues?.weight !== null && initialValues?.weight !== undefined
+              ? Number(initialValues.weight)
+              : undefined,
+          price:
+            initialValues?.price !== null && initialValues?.price !== undefined
+              ? Number(initialValues.price)
+              : undefined,
+          discountPrice:
+            initialValues?.discountPrice !== null && initialValues?.discountPrice !== undefined
+              ? Number(initialValues.discountPrice)
+              : null,
 
           storefrontQuantity: initialValues?.storefrontQuantity ?? 0,
           systemQuantity: initialValues?.systemQuantity ?? 0,
           storefrontReservedQuantity: initialValues?.storefrontReservedQuantity ?? 0,
           systemReservedQuantity: initialValues?.systemReservedQuantity ?? 0,
-          bulkOrderPrice: initialValues?.bulkOrderPrice ?? null,
+          bulkOrderPrice: initialValues?.bulkOrderPrice
+            ? Number(initialValues.bulkOrderPrice)
+            : null,
           keywords: Array.isArray(initialValues?.keywords)
-
             ? initialValues.keywords.join(', ')
             : initialValues?.keywords,
         });
@@ -91,9 +104,9 @@ const ProductModal = ({
   ]);
 
   const uploadProps = {
-    name: 'file',
+    name: "file",
     multiple: true,
-    listType: 'picture-card',
+    listType: "picture-card",
     fileList: imageList,
 
     customRequest: async ({ file, onSuccess, onError }) => {
@@ -102,12 +115,11 @@ const ProductModal = ({
           const res = await onAddImage(initialValues.id, file);
 
           if (!res) {
-            throw new Error('Upload failed');
+            throw new Error("Upload failed");
           }
 
           const imageEntity = res.productImage || res;
-          const imagePath =
-            imageEntity.image || imageEntity.path || null;
+          const imagePath = imageEntity.image || imageEntity.path || null;
 
           const resolvedUrl = imagePath
             ? buildMediaUrl(imagePath)
@@ -119,15 +131,15 @@ const ProductModal = ({
               uid: imageEntity.id,
               id: imageEntity.id,
               name: imagePath || file.name,
-              status: 'done',
+              status: "done",
               image: imagePath,
               url: resolvedUrl,
               thumbUrl: resolvedUrl,
             },
           ]);
 
-          message.success('Image uploaded successfully');
-          onSuccess?.('ok');
+          message.success("Image uploaded successfully");
+          onSuccess?.("ok");
         } else {
           const previewUrl = URL.createObjectURL(file);
 
@@ -136,20 +148,49 @@ const ProductModal = ({
             {
               uid: file.uid,
               name: file.name,
-              status: 'done',
+              status: "done",
               originFileObj: file,
               thumbUrl: previewUrl,
               url: previewUrl,
             },
           ]);
 
-          onSuccess?.('ok');
+          onSuccess?.("ok");
         }
       } catch (error) {
-        //console.error(error);
-        message.error('Image upload failed');
-        onError?.(error);
+        console.error("Upload Error:", error);
+
+        const status =
+          error?.response?.status ||
+          error?.networkError?.statusCode ||
+          error?.status ||
+          error?.cause?.status;
+
+        const messageText = error?.message || "";
+
+        // Handle file too large
+        if (
+          status === 413 ||
+          messageText.includes("413") ||
+          messageText.includes("Request Entity Too Large")
+        ) {
+          message.error("File is too large. Please upload a file less than 600 KB.");
+          return;
+        }
+
+        // Handle network/server rejection
+        if (
+          messageText === "Failed to fetch" ||
+          error instanceof TypeError
+        ) {
+          message.error("Upload failed. Please try again.");
+          return;
+        }
+
+        // Handle all other errors
+        message.error(messageText || "Upload failed.");
       }
+
     },
     onRemove: async (file) => {
       if (file.id && onDeleteImage) {
@@ -201,12 +242,12 @@ const ProductModal = ({
         return Upload.LIST_IGNORE;
       }
 
-      const isLt5M =
-        file.size / 1024 / 1024 < 5;
+      const isLt600K =
+        file.size / 1024 < 600;
 
-      if (!isLt5M) {
+      if (!isLt600K) {
         message.error(
-          'Image must be smaller than 5MB!'
+          'File is too large. Please upload a file less than 600 KB.'
         );
         return Upload.LIST_IGNORE;
       }
@@ -229,7 +270,12 @@ const ProductModal = ({
             .map((k) => k.trim())
             .filter(Boolean)
           : [],
-        deliveryRuleDays: values.deliveryRuleDays ? Number(values.deliveryRuleDays) : null,
+        deliveryRuleDays:
+          values.deliveryRuleDays !== null &&
+            values.deliveryRuleDays !== undefined &&
+            values.deliveryRuleDays !== ''
+            ? Number(values.deliveryRuleDays)
+            : null,
         categoryId: values.categoryId,
         price: parseFloat(values.price),
         discountPrice: values.discountPrice ? parseFloat(values.discountPrice) : null,
@@ -281,9 +327,9 @@ const ProductModal = ({
       destroyOnHidden
       styles={{
         body: {
-          maxHeight: "70vh",   // 🔥 key fix
+          maxHeight: "70vh",
           overflowY: "auto",
-          paddingRight: 8
+          paddingRight: 8,
         }
       }}
     >
@@ -356,7 +402,7 @@ const ProductModal = ({
               ]}
             >
               <InputNumber
-                min={1}
+                min={0}
                 style={{ width: '100%' }}
                 placeholder="e.g. 2"
               />
@@ -412,12 +458,12 @@ const ProductModal = ({
               rules={[{ required: true, message: "Select a unit" }]}
             >
               <Select placeholder="Select a unit">
-                <Option value="kg">Kilogram</Option>
-                <Option value="g">Gram</Option>
+                {/* <Option value="kg">Kilogram</Option> */}
+                {/* <Option value="g">Gram</Option> */}
                 <Option value="piece">Piece</Option>
                 <Option value="dozen">Dozen</Option>
-                <Option value="bunch">Bunch</Option>
-                <Option value="box">Box</Option>
+                {/* <Option value="bunch">Bunch</Option> */}
+                {/* <Option value="box">Box</Option> */}
               </Select>
             </Form.Item>
           </Col>
@@ -560,7 +606,12 @@ const ProductModal = ({
 
         <Form.Item
           name="images"
-          extra="You can upload up to 5 images"
+          extra={
+            <>
+              <div>You can upload up to 5 images <strong>(max 600 KB each)</strong>.</div>
+              <div>Please upload images in a <strong>1:1 (square)</strong> aspect ratio.</div>
+            </>
+          }
         >
           <Upload {...uploadProps}>
             {imageList.length >= 5 ? null : (
@@ -627,4 +678,3 @@ const ProductModal = ({
 };
 
 export default ProductModal;
-

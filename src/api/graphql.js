@@ -1,26 +1,18 @@
 // GraphQL Client Configuration
 
-
-const GRAPHQL_ENDPOINT =
-  import.meta.env.VITE_GRAPHQL_URI;
+const GRAPHQL_ENDPOINT = import.meta.env.VITE_GRAPHQL_URI;
 
 // GraphQL request function
-export const graphqlRequest = async (
-  query,
-  variables = {}
-) => {
-
+export const graphqlRequest = async (query, variables = {}) => {
   try {
     const queryString =
-      typeof query === 'object' &&
-        query.kind === 'Document'
-        ? query.loc?.source?.body ||
-        query.definitions?.[0]?.loc?.source?.body
+      typeof query === "object" && query.kind === "Document"
+        ? query.loc?.source?.body || query.definitions?.[0]?.loc?.source?.body
         : query;
 
     // ───────────────── CHECK FILE ─────────────────
     const hasFile = Object.values(variables).some(
-      (value) => value instanceof File
+      (value) => value instanceof File,
     );
     let response;
     // ───────────────── FILE UPLOAD REQUEST ─────────────────
@@ -34,84 +26,53 @@ export const graphqlRequest = async (
       let fileIndex = 0;
       Object.keys(variables).forEach((key) => {
         if (variables[key] instanceof File) {
-          map[fileIndex] = [
-            `variables.${key}`,
-          ];
+          map[fileIndex] = [`variables.${key}`];
           operations.variables[key] = null;
           fileIndex++;
         }
       });
 
-      formData.append(
-        'operations',
-        JSON.stringify(operations)
-      );
-      formData.append(
-        'map',
-        JSON.stringify(map)
-      );
+      formData.append("operations", JSON.stringify(operations));
+      formData.append("map", JSON.stringify(map));
       fileIndex = 0;
       Object.keys(variables).forEach((key) => {
         if (variables[key] instanceof File) {
-          formData.append(
-            fileIndex,
-            variables[key]
-          );
+          formData.append(fileIndex, variables[key]);
           fileIndex++;
         }
       });
 
-      response = await fetch(
-        GRAPHQL_ENDPOINT,
-        {
-          method: 'POST',
-          headers: {
-            ...(localStorage.getItem(
-              'authToken'
-            ) && {
-              Authorization: `JWT ${localStorage.getItem(
-                'authToken'
-              )}`,
-            }),
-          },
-          body: formData,
-        }
-      );
-
+      response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          ...(localStorage.getItem("authToken") && {
+            Authorization: `JWT ${localStorage.getItem("authToken")}`,
+          }),
+        },
+        body: formData,
+      });
     } else {
       // ───────────────── NORMAL REQUEST ─────────────────
-      response = await fetch(
-        GRAPHQL_ENDPOINT,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json',
+      response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
 
-            ...(localStorage.getItem(
-              'authToken'
-            ) && {
-              Authorization: `JWT ${localStorage.getItem(
-                'authToken'
-              )}`,
-            }),
-          },
-          body: JSON.stringify({
-            query: queryString,
-            variables,
+          ...(localStorage.getItem("authToken") && {
+            Authorization: `JWT ${localStorage.getItem("authToken")}`,
           }),
-        }
-      );
+        },
+        body: JSON.stringify({
+          query: queryString,
+          variables,
+        }),
+      });
     }
 
     const result = await response.json();
     // ───────────────── HANDLE ERRORS ─────────────────
-    if (
-      result.errors &&
-      result.errors.length > 0
-    ) {
-      const errorMessage =
-        result.errors[0].message;
+    if (result.errors && result.errors.length > 0) {
+      const errorMessage = result.errors[0].message;
       // console.error(
       //   'GraphQL Error:',
       //   errorMessage
@@ -119,7 +80,6 @@ export const graphqlRequest = async (
       throw new Error(errorMessage);
     }
     return result.data;
-
   } catch (error) {
     // console.error(
     //   'GraphQL Error:',
@@ -131,15 +91,15 @@ export const graphqlRequest = async (
 
 // Authentication helper functions
 export const setAuthToken = (token) => {
-  localStorage.setItem('authToken', token);
+  localStorage.setItem("authToken", token);
 };
 
 export const getAuthToken = () => {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem("authToken");
 };
 
 export const removeAuthToken = () => {
-  localStorage.removeItem('authToken');
+  localStorage.removeItem("authToken");
 };
 
 export const isAuthenticated = () => {
@@ -260,7 +220,6 @@ export const GRAPHQL_QUERIES = {
     }
   `,
 
-
   CREATE_PRODUCT: `
   mutation CreateProduct(
     $categoryId: Int!,
@@ -326,7 +285,6 @@ export const GRAPHQL_QUERIES = {
     }
   }
 `,
-
 
   UPDATE_PRODUCT: `
     mutation UpdateProduct($id: Int!, $name: String, $keywords: [String!], $shortDescription: String, $description: String, $sku: String, $price: Float, $discountPrice: Float,$bulkOrderPrice:Float, $deliveryRuleDays: Int, $isActive: Boolean, $isFeatured: Boolean, $unit: String, $measureValue: Decimal, $categoryId: Int, $storefrontQuantity: Int, $systemQuantity: Int, $storefrontReservedQuantity: Int, $systemReservedQuantity: Int, $weight: Decimal) {
@@ -570,8 +528,6 @@ query GetAllStocks(
     }
   `,
 
-
-
   GET_DASHBOARD: `
     query AdminDashboard {
       dashboardStats {
@@ -652,7 +608,6 @@ query GetAllStocks(
     }
   `,
 
-
   CREATE_ADMIN_ORDER: `
   mutation CreateAdminOrder(
     $customerId: Int,
@@ -699,16 +654,41 @@ query GetAllStocks(
 `,
 
   UPDATE_ORDER_STATUS: `
-    mutation UpdateOrderStatus($orderId: Int!, $status: String!, $note: String) {
-      updateOrderStatus(orderId: $orderId, status: $status, note: $note) {
-        success
-        order {
-          id
-          status
-        }
+  mutation UpdateOrderStatus(
+    $orderId: Int!
+    $status: String!
+    $note: String
+  ) {
+    updateOrderStatus(
+      orderId: $orderId
+      status: $status
+      note: $note
+    ) {
+      success
+      order {
+        id
+        status
       }
     }
-  `,
+  }
+`,
+
+  CANCEL_CUSTOMER_ORDER: `
+  mutation CancelCustomerOrder(
+    $orderId: Int!
+    $cancellationReason: String!
+    $cancellationNote: String
+  ) {
+    cancelCustomerOrder(
+      orderId: $orderId
+      cancellationReason: $cancellationReason
+      cancellationNote: $cancellationNote
+    ) {
+      success
+      message
+    }
+  }
+`,
 
   GET_ALL_ORDERS: `
   query GetAllOrders(
@@ -717,7 +697,7 @@ query GetAllStocks(
     $orderFrom: String
     $query: String
     $orderType: String
-    
+    $date: Date
   ) {
     allOrders(
       first: $first
@@ -725,7 +705,7 @@ query GetAllStocks(
       orderFrom: $orderFrom
       query: $query
       orderType: $orderType
-      
+      date: $date
     ) {
       orders {
         id
@@ -737,6 +717,8 @@ query GetAllStocks(
         approximateWeight
         finalAmount
         createdAt
+        isAdvanceBooking
+        advanceDeliveryDatetime
 
         customer {
           id
@@ -924,8 +906,78 @@ query GetAllStocks(
       }
     }
   `,
+  GET_REFUND_HISTORY: `
+  query GetRefundHistory(
+    $first: Int!
+    $after: String
+  ) {
+    refundHistory(
+      first: $first
+      after: $after
+    ) {
+      total
+      pending
+      approved
+      rejected
+
+      refunds {
+        id
+        orderNumber
+        customerName
+        customerPhone
+        finalAmount
+        status
+        paymentStatus
+        refundStatus
+        refundAmount
+        cancellationReason
+        cancellationNote
+        cancelledAt
+        refundProcessedAt
+        refundAdminNote
+
+        refundProcessedBy {
+          firstName
+        }
+      }
+
+      nextCursor
+      hasMore
+    }
+  }
+`,
+
+  REJECT_REFUND: `
+  mutation RejectRefund(
+    $orderId: Int!
+    $rejectionReason: String!
+  ) {
+    rejectRefund(
+      orderId: $orderId
+      rejectionReason: $rejectionReason
+    ) {
+      success
+      message
+    }
+  }
+`,
+
+  APPROVE_REFUND: `
+  mutation ApproveRefund(
+    $orderId: Int!
+    $refundAmount: Float!
+    $adminNote: String
+  ) {
+    approveRefund(
+      orderId: $orderId
+      refundAmount: $refundAmount
+      adminNote: $adminNote
+    ) {
+      success
+      message
+    }
+  }
+`,
 };
-
-
 
 export default graphqlRequest;

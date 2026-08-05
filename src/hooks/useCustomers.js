@@ -1,7 +1,7 @@
 import { message } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-const GRAPHQL_URI = import.meta.env.VITE_GRAPHQL_URI || 'http://192.168.1.40:8000/graphql/';
+const GRAPHQL_URI = import.meta.env.VITE_GRAPHQL_URI || 'https://192.168.1.40:8000/graphql/';
 
 const getAuthHeaders = () => ({
     'Content-Type': 'application/json',

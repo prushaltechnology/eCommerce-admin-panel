@@ -4,12 +4,15 @@ import {
   LogoutOutlined,
   MailOutlined,
   ProductOutlined,
+  RollbackOutlined,
   SettingOutlined,
   ShoppingOutlined,
   TeamOutlined,
   TransactionOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+
+
 import { Badge, Layout, Menu, Modal } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -45,6 +48,11 @@ const ADMIN_MENU = [
     ],
   },
   { key: "/transactions", label: "Transactions", icon: <TransactionOutlined /> },
+  {
+    key: "/refunds",
+    label: "Refunds",
+    icon: <RollbackOutlined />
+  },
   { key: "/delivery", label: "Delivery", icon: <CarOutlined /> },
   { key: "/customers", label: "Customers", icon: <UserOutlined /> },
   { key: "/employees", label: "Employees", icon: <TeamOutlined /> },
@@ -81,6 +89,14 @@ const buildPermissionMenu = (hasPermission) => {
 
   if (hasPermission("transaction", "view"))
     items.push({ key: "/transactions", label: "Transactions", icon: <TransactionOutlined /> });
+
+  if (hasPermission("transaction", "view"))
+    items.push({
+      key: "/refunds",
+      label: "Refunds",
+      icon: <RollbackOutlined />,
+    });
+
   if (hasPermission("delivery", "view"))
     items.push({ key: "/delivery", label: "Delivery", icon: <CarOutlined /> });
 

@@ -9,6 +9,7 @@ export default function useCustomOrders() {
   const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [lastQuery, setLastQuery] = useState(null);
+  const [lastDate, setLastDate] = useState(null);
   const [ordersStats, setOrdersStats] = useState({
     total: 0,
     pending: 0,
@@ -18,15 +19,16 @@ export default function useCustomOrders() {
     totalRevenue: 0,
   });
 
-  const fetchOrders = useCallback(async (query = null) => {
+  const fetchOrders = useCallback(async (query = null, date = null) => {
     setLoading(true);
     try {
-      const res = await getCustomOrders(query);
+      const res = await getCustomOrders(query, null, 10, date);
       if (res.success) {
         setOrders(res.orders || []);
         setNextCursor(res.nextCursor);
         setHasMore(res.hasMore);
         setLastQuery(query);
+        setLastDate(date);
         setOrdersStats({
           total: res.totalOrders ?? 0,
           pending: res.pendingOrders ?? 0,
@@ -52,7 +54,7 @@ export default function useCustomOrders() {
     if (!hasMore || !nextCursor) return;
     setFetchingMore(true);
     try {
-      const res = await getCustomOrders(lastQuery, nextCursor);
+      const res = await getCustomOrders(lastQuery, nextCursor, 10, lastDate);
       if (res.success) {
         setOrders(prev => [...prev, ...(res.orders || [])]);
         setNextCursor(res.nextCursor);
@@ -65,7 +67,7 @@ export default function useCustomOrders() {
     } finally {
       setFetchingMore(false);
     }
-  }, [hasMore, lastQuery, nextCursor]);
+  }, [hasMore, lastQuery, lastDate, nextCursor]);
 
   const updateOrder = useCallback(async (orderId, status, note = '') => {
     setLoading(true);
