@@ -80,25 +80,44 @@ export const createAdminOrder = async (
   };
 };
 
-export const calculateDeliveryCharge = async (address, phone) => {
+export const calculateDeliveryCharge = async (
+  address,
+  phone,
+  productSubtotal,
+  deliveryMode,
+  parcelWeight = null,
+) => {
   try {
     const data = await graphqlRequest(
       GRAPHQL_QUERIES.CALCULATE_DELIVERY_CHARGE,
       {
         address,
         phone,
+        productSubtotal,
+        deliveryMode,
+        parcelWeight,
       },
     );
+
     const result = data?.calculateDeliveryCharge;
+
     return {
       success: result?.success ?? false,
       deliveryCharge: result?.deliveryCharge ?? 0,
+      customerDeliveryCharge: result?.customerDeliveryCharge ?? 0,
+      deliveryDiscount: result?.deliveryDiscount ?? 0,
+      eligibleForDiscount: result?.eligibleForDiscount ?? false,
+      serviceable: result?.serviceable ?? false,
       message: result?.message || "",
     };
   } catch (error) {
     return {
       success: false,
       deliveryCharge: 0,
+      customerDeliveryCharge: 0,
+      deliveryDiscount: 0,
+      eligibleForDiscount: false,
+      serviceable: false,
       message: error.message || "Failed to calculate delivery charge",
     };
   }
@@ -305,6 +324,40 @@ export const getOrderTracking = async (orderId) => {
     return {
       success: false,
       message: error.message || "Failed to fetch tracking",
+    };
+  }
+};
+// Send payment reminder
+export const sendPaymentReminder = async (orderId) => {
+  try {
+    const data = await graphqlRequest(
+      GRAPHQL_QUERIES.SEND_PAYMENT_REMINDER,
+      {
+        orderId: parseInt(orderId, 10),
+      }
+    );
+
+    const result = data?.sendPaymentReminder;
+
+    if (!result) {
+      return {
+        success: false,
+        message: "Failed to send payment reminder",
+      };
+    }
+
+    return {
+      success: result.success ?? false,
+      message:
+        result.message ||
+        (result.success
+          ? "Payment reminder sent successfully"
+          : "Failed to send payment reminder"),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Failed to send payment reminder",
     };
   }
 };

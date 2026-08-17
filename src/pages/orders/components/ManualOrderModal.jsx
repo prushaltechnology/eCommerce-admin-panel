@@ -115,15 +115,57 @@ const ManualOrderModal = ({
 
   // ── Delivery charge helper ─────────────────────────────────────────────────
   const fetchDeliveryCharge = async (customer, address) => {
-    if (!customer || !address) { setDeliveryCharge(0); return; }
-    const addressStr = [address.addressLine, address.city, address.state].filter(Boolean).join(' ');
-    const phone = customer.phone && customer.phone !== 'N/A' ? customer.phone : '';
-    if (!addressStr) { setDeliveryCharge(0); return; }
+    if (!customer || !address) {
+      setDeliveryCharge(0);
+      return;
+    }
+
+    const addressStr = [
+      address.addressLine,
+      address.city,
+      address.state,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const phone =
+      customer.phone && customer.phone !== "N/A"
+        ? customer.phone
+        : "";
+
+    if (!addressStr) {
+      setDeliveryCharge(0);
+      return;
+    }
+
+    // Calculate subtotal and parcel weight
+    const productSubtotal = orderItems.reduce(
+      (total, item) => total + Number(item.subtotal || 0),
+      0
+    );
+
+    const parcelWeight = orderItems.reduce((total, item) => {
+      const weight = Number(item.product?.weight || 0); // Change if your product uses another field
+      const quantity = Number(item.quantity || 1);
+
+      return total + weight * quantity;
+    }, 0);
+
+    const deliveryMode = "STANDARD"; // or "EXPRESS" if selected by the user
+
     setDeliveryChargeLoading(true);
+
     try {
-      const res = await calculateDeliveryCharge(addressStr, phone);
+      const res = await calculateDeliveryCharge(
+        addressStr,
+        phone,
+        productSubtotal,
+        deliveryMode,
+        parcelWeight
+      );
+
       if (res.success) {
-        setDeliveryCharge(res.deliveryCharge ?? 0);
+        setDeliveryCharge(res.customerDeliveryCharge ?? res.deliveryCharge ?? 0);
       } else {
         setDeliveryCharge(0);
       }
@@ -391,10 +433,17 @@ const ManualOrderModal = ({
 
                   {/* Delivery charge — only shown once a product is selected */}
                   {showDeliveryCharge && (
-                    <div style={{ fontSize: 14, color: '#595959' }}>
-                      Delivery Charge:{' '}
-                      <span style={{ fontWeight: 600, color: deliveryChargeLoading ? '#8c8c8c' : '#fa8c16' }}>
-                        {deliveryChargeLoading ? 'Calculating...' : formatCurrency(deliveryCharge)}
+                    <div style={{ fontSize: 14, color: "#595959" }}>
+                      Delivery Charge:{" "}
+                      <span
+                        style={{
+                          fontWeight: 600,
+                          color: deliveryChargeLoading ? "#8c8c8c" : "#fa8c16",
+                        }}
+                      >
+                        {deliveryChargeLoading
+                          ? "Calculating..."
+                          : formatCurrency(deliveryCharge)}
                       </span>
                     </div>
                   )}

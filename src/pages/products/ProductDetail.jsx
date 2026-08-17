@@ -246,12 +246,38 @@ const ProductDetail = () => {
         open={imageModalVisible}
         footer={null}
         onCancel={() => setImageModalVisible(false)}
+        centered
+        closeIcon={
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "#fff",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+            }}
+          >
+            ✕
+          </span>
+        }
+        styles={{
+          body: { padding: 0 },
+          content: { padding: 0, overflow: "hidden" },
+        }}
       >
-        <Image
+        <img
           src={`${import.meta.env.VITE_GRAPHQL_URI.replace('/graphql/', '').replace('/graphql', '')}/media/${imageList[currentImageIndex]?.image}`}
+          alt="product preview"
+          style={{
+            width: "100%",
+            display: "block",
+            borderRadius: 8,
+          }}
         />
       </Modal>
-
     </div>
   );
 };

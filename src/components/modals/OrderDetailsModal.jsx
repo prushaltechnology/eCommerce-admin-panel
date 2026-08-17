@@ -1,16 +1,100 @@
-import { Modal, Tag } from 'antd';
+import { useState } from "react";
+import { Modal, Tag, Button, message } from "antd";
 import dayjs from 'dayjs';
 import OrderTrackingTimeline from './OrderTrackingTimeline';
-
+import { sendPaymentReminder } from "../../api/orders";
 const fmt = (val) => `₹${parseFloat(val || 0).toFixed(2)}`;
+import {
+  EyeOutlined,
+  DeleteOutlined,
+  ClockCircleOutlined,
+  CreditCardOutlined,
+  CheckCircleOutlined,
+  ShoppingOutlined,
+  CarOutlined,
+  CloseCircleOutlined,
+  QuestionCircleOutlined,
+  UndoOutlined,
+  StopOutlined,
+  CalendarOutlined,
+  WalletOutlined, // <-- Add this
+} from "@ant-design/icons";
 
-const STATUS_CONFIG = {
-  pending: { color: 'warning', icon: '⏳' },
-  confirmed: { color: 'processing', icon: '✅' },
-  dispatched: { color: 'blue', icon: '🚚' },
-  delivered: { color: 'success', icon: '📦' },
-  cancelled: { color: 'error', icon: '✖' },
+const getStatusIcon = (status) => {
+  const iconStyle = {
+    fontSize: 12,
+  };
+
+  switch (status?.toLowerCase()) {
+    case "payment_pending":
+      return <CreditCardOutlined style={iconStyle} />;
+
+    case "payment_successful":
+      return <CheckCircleOutlined style={iconStyle} />;
+
+    case "scheduled":
+      return <CalendarOutlined style={iconStyle} />;
+
+    case "adv_order_confirmed":
+      return <WalletOutlined style={iconStyle} />;
+
+    case "pending":
+      return <ClockCircleOutlined style={iconStyle} />;
+
+    case "confirmed":
+      return <ShoppingOutlined style={iconStyle} />;
+
+    case "dispatched":
+      return <CarOutlined style={iconStyle} />;
+
+    case "delivered":
+      return <CheckCircleOutlined style={iconStyle} />;
+
+    case "cancelled":
+      return <CloseCircleOutlined style={iconStyle} />;
+
+    case "refunded":
+      return <UndoOutlined style={iconStyle} />;
+
+    case "refund_rejected":
+      return <StopOutlined style={iconStyle} />;
+
+    default:
+      return <QuestionCircleOutlined style={iconStyle} />;
+  }
 };
+
+const getStatusColor = (status) => {
+  const colors = {
+    payment_pending: "gold",
+    payment_successful: "cyan",
+    scheduled: "geekblue",
+    adv_order_confirmed: "gold",
+    pending: "orange",
+    confirmed: "blue",
+    dispatched: "purple",
+    delivered: "green",
+    cancelled: "red",
+    refunded: "magenta",
+    refund_rejected: "volcano",
+  };
+
+  return colors[status?.toLowerCase()] || "default";
+};
+
+const formatStatus = (status) =>
+  status
+    ?.replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+
+// const STATUS_CONFIG = {
+//   pending: { color: 'warning', icon: '⏳' },
+//   confirmed: { color: 'processing', icon: '✅' },
+//   dispatched: { color: 'blue', icon: '🚚' },
+//   delivered: { color: 'success', icon: '📦' },
+//   cancelled: { color: 'error', icon: '✖' },
+// };
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 
@@ -83,7 +167,7 @@ const ItemImage = ({ item }) => {
 
 const OrderDetailsModal = ({ open, order, onCancel, trackingData, trackingLoading }) => {
   if (!order) return null;
-
+  const [sendingReminder, setSendingReminder] = useState(false);
   const isHomeDelivery =
     order.purchaseType === 'HOME_DELIVERY' ||
     order.purchaseType === 'home_delivery';
@@ -97,7 +181,23 @@ const OrderDetailsModal = ({ open, order, onCancel, trackingData, trackingLoadin
   const deliveryCharge = Math.max(0, finalAmount - itemsSubtotal);
 
   const statusKey = order.status?.toLowerCase();
-  const statusCfg = STATUS_CONFIG[statusKey] || {};
+  // const statusCfg = STATUS_CONFIG[statusKey] || {};
+
+  const handleSendPaymentReminder = async () => {
+    setSendingReminder(true);
+
+    try {
+      const res = await sendPaymentReminder(order.id);
+
+      if (res.success) {
+        message.success(res.message);
+      } else {
+        message.error(res.message);
+      }
+    } finally {
+      setSendingReminder(false);
+    }
+  };
 
   return (
     <Modal
@@ -173,11 +273,25 @@ const OrderDetailsModal = ({ open, order, onCancel, trackingData, trackingLoadin
               </Field>
             </div>
             <div>
-              <Field label="Status">
-                <Tag color={statusCfg.color || 'default'} style={{ marginTop: 2 }}>
-                  {statusCfg.icon} {order.status}
-                </Tag>
-              </Field>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div>
+                  <Tag color={getStatusColor(statusKey)}>
+                    {getStatusIcon(statusKey)} {formatStatus(statusKey)}
+                  </Tag>
+                </div>
+
+                {statusKey === "adv_order_confirmed" && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    loading={sendingReminder}
+                    onClick={handleSendPaymentReminder}
+                    block
+                  >
+                    Send Payment Reminder
+                  </Button>
+                )}
+              </div>
               <Field label="Purchase type">
                 <Tag color={isHomeDelivery ? 'blue' : 'green'} style={{ marginTop: 2 }}>
                   {isHomeDelivery ? '🏠 Home delivery' : '🛒 Walk-in'}

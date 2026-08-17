@@ -429,12 +429,16 @@ mutation UpdateStock(
 query GetAllStocks(
   $query: String,
   $first: Int!,
-  $after: String
+  $after: String,
+  $inventoryType: String,
+  $stockStatus: String
 ) {
   allStocks(
     query: $query,
     first: $first,
-    after: $after
+    after: $after,
+    inventoryType: $inventoryType,
+    stockStatus: $stockStatus
   ) {
 
     stocks {
@@ -898,14 +902,30 @@ query GetAllStocks(
   `,
 
   CALCULATE_DELIVERY_CHARGE: `
-    mutation CalculateDeliveryCharge($address: String!, $phone: String!) {
-      calculateDeliveryCharge(address: $address, phone: $phone) {
-        success
-        deliveryCharge
-        message
-      }
+  mutation CalculateDeliveryCharge(
+    $address: String!
+    $phone: String!
+    $productSubtotal: Float!
+    $deliveryMode: String!
+    $parcelWeight: Float
+  ) {
+    calculateDeliveryCharge(
+      address: $address
+      phone: $phone
+      productSubtotal: $productSubtotal
+      deliveryMode: $deliveryMode
+      parcelWeight: $parcelWeight
+    ) {
+      success
+      deliveryCharge
+      customerDeliveryCharge
+      deliveryDiscount
+      eligibleForDiscount
+      serviceable
+      message
     }
-  `,
+  }
+`,
   GET_REFUND_HISTORY: `
   query GetRefundHistory(
     $first: Int!
@@ -973,6 +993,14 @@ query GetAllStocks(
       refundAmount: $refundAmount
       adminNote: $adminNote
     ) {
+      success
+      message
+    }
+  }
+`,
+  SEND_PAYMENT_REMINDER: `
+  mutation SendPaymentReminder($orderId: Int!) {
+    sendPaymentReminder(orderId: $orderId) {
       success
       message
     }

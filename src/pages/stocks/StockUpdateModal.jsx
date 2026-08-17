@@ -97,13 +97,34 @@ const StockUpdateModal = ({
                 rules={[{ required: true, message: 'Please select update type' }]}
             >
                 <Radio.Group>
-                    <Radio value="add">Add Stock</Radio>
-                    <Radio value="subtract">Remove Stock</Radio>
-                    <Radio value="set">Update Stock Qty</Radio>
+                    <Radio value="add">Add to current stock</Radio>
+                    <Radio value="subtract">Remove from current stock</Radio>
+                    <Radio value="set">Replace stock quantity</Radio>
                 </Radio.Group>
             </Form.Item>
 
-            {/* Quantity / level input — changes based on update type */}
+            {/* Helper text describing exactly what the selected update type does */}
+            <Form.Item
+                noStyle
+                shouldUpdate={(prev, cur) => prev.updateType !== cur.updateType}
+            >
+                {({ getFieldValue }) => {
+                    const updateType = getFieldValue('updateType');
+                    const helperText =
+                        updateType === 'subtract'
+                            ? 'Subtracts the quantity you enter below from the current stock.'
+                            : updateType === 'set'
+                                ? 'Replaces the current stock entirely with the value you enter below.'
+                                : 'Adds the quantity you enter below on top of the current stock.';
+
+                    return (
+                        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: -12, marginBottom: 16 }}>
+                            {helperText}
+                        </Text>
+                    );
+                }}
+            </Form.Item>
+
             {/* Quantity / level input — changes based on update type */}
             <Form.Item
                 noStyle
@@ -148,7 +169,11 @@ const StockUpdateModal = ({
                     ) : (
                         <Form.Item
                             name="quantity"
-                            label="Quantity"
+                            label={
+                                getFieldValue('updateType') === 'subtract'
+                                    ? 'Quantity to Remove'
+                                    : 'Quantity to Add'
+                            }
                             rules={[
                                 { required: true, message: 'Please enter quantity' },
                                 {

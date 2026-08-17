@@ -79,7 +79,12 @@ export const createProduct = async (productData) => {
       price: numericPrice,
       discountPrice: discountPrice ? parseFloat(discountPrice) : null,
       bulkOrderPrice: bulkOrderPrice ? parseFloat(bulkOrderPrice) : null,
-      deliveryRuleDays: deliveryRuleDays ? Number(deliveryRuleDays) : null,
+      deliveryRuleDays:
+        deliveryRuleDays !== null &&
+        deliveryRuleDays !== undefined &&
+        deliveryRuleDays !== ""
+          ? Number(deliveryRuleDays)
+          : null,
       isActive,
       unit,
       measureValue: measureValue ? String(measureValue) : null,
@@ -438,12 +443,20 @@ export const updateStock = async (productId, inventoryType, quantity) => {
   }
 };
 
-export const getAllStocks = async (query = null, first = 10, after = null) => {
+export const getAllStocks = async (
+  query = null,
+  first = 10,
+  after = null,
+  inventoryType = null,
+  stockStatus = null,
+) => {
   try {
     const variables = {
       query,
       first,
       after,
+      inventoryType,
+      stockStatus,
     };
 
     const data = await graphqlRequest(

@@ -67,6 +67,11 @@ const ProductModal = ({
               ? Number(initialValues.discountPrice)
               : null,
 
+          deliveryRuleDays:
+            initialValues?.deliveryRuleDays !== null && initialValues?.deliveryRuleDays !== undefined
+              ? Number(initialValues.deliveryRuleDays)
+              : 0,
+
           storefrontQuantity: initialValues?.storefrontQuantity ?? 0,
           systemQuantity: initialValues?.systemQuantity ?? 0,
           storefrontReservedQuantity: initialValues?.storefrontReservedQuantity ?? 0,
@@ -260,37 +265,36 @@ const ProductModal = ({
     values
   ) => {
     try {
+      // deliveryRuleDays: guaranteed to be a valid finite number, NEVER null/undefined/NaN.
+      // Number(null) -> 0, Number(undefined) -> NaN, Number('') -> 0, Number(2) -> 2
+      const rawDeliveryRuleDays = Number(values.deliveryRuleDays);
+      const deliveryRuleDays = Number.isFinite(rawDeliveryRuleDays)
+        ? rawDeliveryRuleDays
+        : 0;
+
       const productData = {
         ...values,
-        shortDescription:
-          values.shortDescription,
+        shortDescription: values.shortDescription,
         keywords: values.keywords
-          ? values.keywords
-            .split(',')
-            .map((k) => k.trim())
-            .filter(Boolean)
+          ? values.keywords.split(',').map((k) => k.trim()).filter(Boolean)
           : [],
-        deliveryRuleDays:
-          values.deliveryRuleDays !== null &&
-            values.deliveryRuleDays !== undefined &&
-            values.deliveryRuleDays !== ''
-            ? Number(values.deliveryRuleDays)
-            : null,
+        deliveryRuleDays,
         categoryId: values.categoryId,
         price: parseFloat(values.price),
         discountPrice: values.discountPrice ? parseFloat(values.discountPrice) : null,
         bulkOrderPrice: values.bulkOrderPrice ? parseFloat(values.bulkOrderPrice) : null,
-        isActive:
-          values.isActive !== false,
-        isFeatured:
-          values.isFeatured === true,
-        measureValue:
-          values.measureValue || null,
-        storefrontQuantity: Number(values.storefrontQuantity),
-        systemQuantity: Number(values.systemQuantity),
-        storefrontReservedQuantity: Number(values.storefrontReservedQuantity),
-        systemReservedQuantity: Number(values.systemReservedQuantity),
+        isActive: values.isActive !== false,
+        isFeatured: values.isFeatured === true,
+        measureValue: values.measureValue || null,
+        storefrontQuantity: Number(values.storefrontQuantity) || 0,
+        systemQuantity: Number(values.systemQuantity) || 0,
+        storefrontReservedQuantity: Number(values.storefrontReservedQuantity) || 0,
+        systemReservedQuantity: Number(values.systemReservedQuantity) || 0,
       };
+
+      // Debug: confirm what's actually being sent before calling onSubmit
+      console.log("productData being submitted:", productData);
+
       // ONLY FOR NEW PRODUCT
       const imageData =
         imageList
@@ -394,6 +398,7 @@ const ProductModal = ({
             <Form.Item
               name="deliveryRuleDays"
               label="Delivery Rule Days"
+              initialValue={0}
               rules={[
                 {
                   required: true,
@@ -458,12 +463,14 @@ const ProductModal = ({
               rules={[{ required: true, message: "Select a unit" }]}
             >
               <Select placeholder="Select a unit">
-                {/* <Option value="kg">Kilogram</Option> */}
-                {/* <Option value="g">Gram</Option> */}
                 <Option value="piece">Piece</Option>
+                <Option value="stem">Stem</Option>
+                <Option value="bunch">Bunch</Option>
+                <Option value="bouquet">Bouquet</Option>
                 <Option value="dozen">Dozen</Option>
-                {/* <Option value="bunch">Bunch</Option> */}
-                {/* <Option value="box">Box</Option> */}
+                <Option value="box">Box</Option>
+                <Option value="basket">Basket</Option>
+                <Option value="pack">Pack</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -500,6 +507,7 @@ const ProductModal = ({
             <Form.Item
               name="storefrontQuantity"
               label="Storefront Qty"
+              initialValue={0}
               rules={[{ required: true, message: 'Required' }]}
             >
               <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
@@ -509,6 +517,7 @@ const ProductModal = ({
             <Form.Item
               name="systemQuantity"
               label="System Qty"
+              initialValue={0}
               rules={[{ required: true, message: 'Required' }]}
             >
               <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
@@ -518,6 +527,7 @@ const ProductModal = ({
             <Form.Item
               name="storefrontReservedQuantity"
               label="Storefront Reserved"
+              initialValue={0}
             >
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>
@@ -526,6 +536,7 @@ const ProductModal = ({
             <Form.Item
               name="systemReservedQuantity"
               label="System Reserved"
+              initialValue={0}
             >
               <InputNumber min={0} style={{ width: '100%' }} />
             </Form.Item>

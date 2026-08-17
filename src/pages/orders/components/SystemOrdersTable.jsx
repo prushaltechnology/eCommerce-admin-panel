@@ -40,6 +40,9 @@ const getStatusIcon = (status) => {
     case "scheduled":
       return <CalendarOutlined style={iconStyle} />;
 
+    case "adv_order_confirmed":
+      return <CheckCircleOutlined style={iconStyle} />;
+
     case "pending":
       return <ClockCircleOutlined style={iconStyle} />;
 
@@ -71,6 +74,7 @@ const getStatusColor = (status) => {
     payment_pending: "gold",
     payment_successful: "cyan",
     scheduled: "geekblue",
+    adv_order_confirmed: "gold",
     pending: "orange",
     confirmed: "blue",
     dispatched: "purple",

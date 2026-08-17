@@ -35,7 +35,7 @@ const StockStats = ({ stats, loading }) => {
             title: (
                 <InfoTooltip
                     title="Low Stock"
-                    text="Products with quantity between 6 and 15"
+                    text="Products with quantity between 6 and 20"
                 />
             ),
             value: stats.low,

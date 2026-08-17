@@ -41,14 +41,14 @@ const columns = [
             ) : (
                 <Tag
                     color={
-                        (record.storefrontStock?.quantity || 0) === 0
+                        (record.storefrontStock?.availableQuantity || 0) === 0
                             ? 'red'
-                            : (record.storefrontStock?.quantity || 0) < 10
+                            : (record.storefrontStock?.availableQuantity || 0) < 10
                                 ? 'orange'
                                 : 'green'
                     }
                 >
-                    {record.storefrontStock?.quantity || 0}
+                    {record.storefrontStock?.availableQuantity || 0}
                 </Tag>
             ),
     },
@@ -69,14 +69,14 @@ const columns = [
             ) : (
                 <Tag
                     color={
-                        (record.systemStock?.quantity || 0) === 0
+                        (record.systemStock?.availableQuantity || 0) === 0
                             ? 'red'
-                            : (record.systemStock?.quantity || 0) < 10
+                            : (record.systemStock?.availableQuantity || 0) < 10
                                 ? 'orange'
                                 : 'green'
                     }
                 >
-                    {record.systemStock?.quantity || 0}
+                    {record.systemStock?.availableQuantity || 0}
                 </Tag>
             ),
     },

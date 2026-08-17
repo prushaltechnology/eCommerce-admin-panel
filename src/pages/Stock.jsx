@@ -1,28 +1,20 @@
-import { Form, Space, message } from 'antd';
-import { useEffect, useState } from 'react';
+import { Form, message } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProductModal from '../components/modals/ProductModal';
 import usePermissions from '../hooks/usePermissions';
 import useProducts from '../hooks/useProducts';
-import useStockManager from '../hooks/useStockManager';
-//import StockAlerts from './stocks/StockAlerts';
 import StockHeader from './stocks/StockHeader';
 import StockStats from './stocks/StockStats';
 import StockTable from './stocks/StockTable';
 import StockUpdateModal from './stocks/StockUpdateModal';
+import useStockManager from '../hooks/useStockManager';
 
-/**
- * Stock management page.
- *
- * Responsibilities kept here (orchestration only):
- *  - Wiring the stock manager hook to child components
- *  - Coordinating modal open/close state
- *  - Delegating stock-update and product-creation side-effects
- */
 const Stock = () => {
   const { canUpdate } = usePermissions();
   const canManageStock = canUpdate('stock');
   const canCreateProduct = canUpdate('product');
-
+  const [searchParams] = useSearchParams();
 
   const {
     categories,
@@ -34,7 +26,6 @@ const Stock = () => {
   } = useProducts();
 
   const {
-    // Table data
     filteredStocks,
     stocksLoading,
     fetchingMore,
@@ -47,50 +38,48 @@ const Stock = () => {
     setStockFilter,
     loadStocks,
 
-    // Product dropdown (inside modal)
     productList,
     productListLoading,
     handleProductSearch,
     handleProductPopupScroll,
 
-    // Helpers
     getStockQuantity,
     getStockStatus,
     getStockPercentage,
+    getStorefrontAvailable,
+    getSystemAvailable,
   } = useStockManager();
 
-  // ── Stock update modal ─────────────────────────────────────────────────────
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam && ['low', 'critical', 'out'].includes(filterParam)) {
+      setStockFilter(filterParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedStockItem, setSelectedStockItem] = useState(null);
   const [stockForm] = Form.useForm();
 
   const handleOpenManageStock = () => {
     if (!canManageStock) return;
-
     stockForm.resetFields();
     setSelectedStockItem(null);
     setIsStockModalOpen(true);
   };
 
   const handleEditStock = (record, type, inventoryType = 'storefront') => {
-
     if (!canManageStock) return;
 
-    const currentQty = getStockQuantity(record);
     setSelectedStockItem(record);
     stockForm.setFieldsValue({
       inventoryType,
       stock:
         type === 'set'
-          ? (
-            inventoryType === 'storefront'
-              ? record.storefrontStock
-              : record.systemStock
-          )
+          ? (inventoryType === 'storefront' ? record.storefrontStock : record.systemStock)
           : undefined,
-
       updateType: type,
-
       quantity: 1,
     });
     setIsStockModalOpen(true);
@@ -102,11 +91,8 @@ const Stock = () => {
     setSelectedStockItem({
       id: product.id,
       name: product.name,
-      storefrontStock:
-        Number(product.storefrontStock || 0),
-
-      systemStock:
-        Number(product.systemStock || 0),
+      storefrontStock: Number(product.storefrontStock || 0),
+      systemStock: Number(product.systemStock || 0),
     });
     stockForm.setFieldsValue({ updateType: 'add', quantity: 1 });
   };
@@ -115,7 +101,6 @@ const Stock = () => {
     if (!canManageStock) return;
 
     try {
-      //const currentQty = getStockQuantity(selectedStockItem);
       const currentQty =
         values.inventoryType === 'storefront'
           ? selectedStockItem.storefrontStock || 0
@@ -132,15 +117,16 @@ const Stock = () => {
         await loadStocks(searchText, null, true);
         setIsStockModalOpen(false);
         stockForm.resetFields();
-      } else {
-        message.error('Failed to update stock');
       }
-    } catch {
-      message.error('Failed to update stock');
+    } catch (err) {
+      message.error(err?.message || 'Failed to update stock');
     }
   };
 
-  // ── Add product modal ──────────────────────────────────────────────────────
+  const handleLoadMore = useCallback(() => {
+    loadStocks(searchText, nextCursor, false);
+  }, [loadStocks, searchText, nextCursor]);
+
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [productForm] = Form.useForm();
   const [imageList, setImageList] = useState([]);
@@ -154,7 +140,6 @@ const Stock = () => {
 
   const handleAddProduct = () => {
     if (!canCreateProduct) return;
-
     productForm.resetFields();
     setImageList([]);
     setIsProductModalOpen(true);
@@ -203,74 +188,68 @@ const Stock = () => {
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden", }}>
-      <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <StockHeader
+        onManageStock={handleOpenManageStock}
+        onAddProduct={handleAddProduct}
+        canManageStock={canManageStock}
+        canCreateProduct={canCreateProduct}
+      />
 
-        <StockHeader
-          onManageStock={handleOpenManageStock}
-          onAddProduct={handleAddProduct}
-          canManageStock={canManageStock}
-          canCreateProduct={canCreateProduct}
+      <StockStats stats={stockStats} loading={stocksLoading} />
 
+      <StockTable
+        items={filteredStocks}
+        loading={stocksLoading}
+        fetchingMore={fetchingMore}
+        hasMore={hasMore}
+        searchText={searchText}
+        stockFilter={stockFilter}
+        onSearchChange={setSearchText}
+        onFilterChange={setStockFilter}
+        onEditStock={handleEditStock}
+        canManageStock={canManageStock}
+        onLoadMore={handleLoadMore}
+        getStockQuantity={getStockQuantity}
+        getStockStatus={getStockStatus}
+        getStockPercentage={getStockPercentage}
+        getStorefrontAvailable={getStorefrontAvailable}
+        getSystemAvailable={getSystemAvailable}
+
+      />
+
+      {canManageStock && (
+        <StockUpdateModal
+          open={isStockModalOpen}
+          onCancel={() => setIsStockModalOpen(false)}
+          onFinish={handleStockFormFinish}
+          form={stockForm}
+          actionLoading={actionLoading}
+          selectedItem={selectedStockItem}
+          onProductSelect={handleProductSelect}
+          productList={productList}
+          productListLoading={productListLoading}
+          onProductSearch={handleProductSearch}
+          onProductPopupScroll={handleProductPopupScroll}
         />
+      )}
 
-
-        <StockStats stats={stockStats} loading={stocksLoading} />
-
-        <StockTable
-          items={filteredStocks}
-          loading={stocksLoading}
-          fetchingMore={fetchingMore}
-          hasMore={hasMore}
-          searchText={searchText}
-          stockFilter={stockFilter}
-          onSearchChange={setSearchText}
-          onFilterChange={setStockFilter}
-          onEditStock={handleEditStock}
-          canManageStock={canManageStock}
-          onLoadMore={() => loadStocks(searchText, nextCursor, false)}
-          getStockQuantity={getStockQuantity}
-          getStockStatus={getStockStatus}
-          getStockPercentage={getStockPercentage}
+      {canCreateProduct && (
+        <ProductModal
+          visible={isProductModalOpen}
+          onCancel={handleProductModalClose}
+          onSubmit={handleProductSubmit}
+          form={productForm}
+          categories={categories}
+          loading={productLoading}
+          imageList={imageList}
+          setImageList={setImageList}
+          title="Add Product"
         />
-
-        {canManageStock && (
-          <StockUpdateModal
-            open={isStockModalOpen}
-            onCancel={() => setIsStockModalOpen(false)}
-            onFinish={handleStockFormFinish}
-            form={stockForm}
-            actionLoading={actionLoading}
-            selectedItem={selectedStockItem}
-            onProductSelect={handleProductSelect}
-            productList={productList}
-            productListLoading={productListLoading}
-            onProductSearch={handleProductSearch}
-            onProductPopupScroll={handleProductPopupScroll}
-          />
-        )}
-
-
-        {canCreateProduct && (
-          <ProductModal
-            visible={isProductModalOpen}
-            onCancel={handleProductModalClose}
-            onSubmit={handleProductSubmit}
-            form={productForm}
-            categories={categories}
-            loading={productLoading}
-            imageList={imageList}
-            setImageList={setImageList}
-            title="Add Product"
-          />
-        )}
-
-      </Space>
-    </div >
+      )}
+    </div>
   );
 };
 
 export default Stock;
-
