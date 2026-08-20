@@ -13,6 +13,24 @@ const getProductImage = (product) => {
         : `${import.meta.env.VITE_GRAPHQL_URI.replace('/graphql/', '').replace('/graphql', '')}/media/${validImage.image}`;
 };
 
+const getDeliveryAddressParts = (address) => {
+    if (!address || !address.trim()) return { name: 'NA', contact: 'NA', line: 'N/A' };
+
+    const parts = address.split(',').map((p) => p.trim());
+
+    const looksLikePhone = /^\d{7,15}$/.test(parts[1] || '');
+
+    if (parts.length >= 2 && looksLikePhone) {
+        const name = parts[0] || 'NA';
+        const contact = parts[1] || 'NA';
+        const line = parts.slice(2).join(', ') || 'N/A';
+        return { name, contact, line };
+    }
+
+    // Old format — no name/phone prefix present
+    return { name: 'NA', contact: 'NA', line: address };
+};
+
 // console.log(enquiry)
 
 const BulkOrderDetailsModal = ({
@@ -83,10 +101,24 @@ const BulkOrderDetailsModal = ({
                                 <p style={{ color: '#666', fontSize: 13 }}>
                                     {enquiry.bulkOrderDetails || 'N/A'}
                                 </p>
-                                <p><strong>Address:</strong></p>
-                                <p style={{ color: '#666', fontSize: 13 }}>
-                                    {enquiry.address || 'N/A'}
-                                </p>
+
+                                {(() => {
+                                    const { name, contact, line } = getDeliveryAddressParts(enquiry.address);
+                                    return (
+                                        <>
+                                            <p>
+                                                <strong>Delivery Name:</strong>{' '}
+                                                <span style={{ color: '#666', fontSize: 13 }}>{name}</span>
+                                            </p>
+                                            <p>
+                                                <strong>Delivery Contact:</strong>{' '}
+                                                <span style={{ color: '#666', fontSize: 13 }}>{contact}</span>
+                                            </p>
+                                            <p><strong>Delivery Address:</strong></p>
+                                            <p style={{ color: '#666', fontSize: 13 }}>{line}</p>
+                                        </>
+                                    );
+                                })()}
                             </Col>
                         </Row>
                     </Card>
