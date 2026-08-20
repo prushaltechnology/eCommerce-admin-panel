@@ -1,26 +1,18 @@
 // GraphQL Client Configuration
 
-
-const GRAPHQL_ENDPOINT =
-  import.meta.env.VITE_GRAPHQL_URI;
+const GRAPHQL_ENDPOINT = import.meta.env.VITE_GRAPHQL_URI;
 
 // GraphQL request function
-export const graphqlRequest = async (
-  query,
-  variables = {}
-) => {
-
+export const graphqlRequest = async (query, variables = {}) => {
   try {
     const queryString =
-      typeof query === 'object' &&
-        query.kind === 'Document'
-        ? query.loc?.source?.body ||
-        query.definitions?.[0]?.loc?.source?.body
+      typeof query === "object" && query.kind === "Document"
+        ? query.loc?.source?.body || query.definitions?.[0]?.loc?.source?.body
         : query;
 
     // ───────────────── CHECK FILE ─────────────────
     const hasFile = Object.values(variables).some(
-      (value) => value instanceof File
+      (value) => value instanceof File,
     );
     let response;
     // ───────────────── FILE UPLOAD REQUEST ─────────────────
@@ -34,112 +26,80 @@ export const graphqlRequest = async (
       let fileIndex = 0;
       Object.keys(variables).forEach((key) => {
         if (variables[key] instanceof File) {
-          map[fileIndex] = [
-            `variables.${key}`,
-          ];
+          map[fileIndex] = [`variables.${key}`];
           operations.variables[key] = null;
           fileIndex++;
         }
       });
 
-      formData.append(
-        'operations',
-        JSON.stringify(operations)
-      );
-      formData.append(
-        'map',
-        JSON.stringify(map)
-      );
+      formData.append("operations", JSON.stringify(operations));
+      formData.append("map", JSON.stringify(map));
       fileIndex = 0;
       Object.keys(variables).forEach((key) => {
         if (variables[key] instanceof File) {
-          formData.append(
-            fileIndex,
-            variables[key]
-          );
+          formData.append(fileIndex, variables[key]);
           fileIndex++;
         }
       });
 
-      response = await fetch(
-        GRAPHQL_ENDPOINT,
-        {
-          method: 'POST',
-          headers: {
-            ...(localStorage.getItem(
-              'authToken'
-            ) && {
-              Authorization: `JWT ${localStorage.getItem(
-                'authToken'
-              )}`,
-            }),
-          },
-          body: formData,
-        }
-      );
-
+      response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          ...(localStorage.getItem("authToken") && {
+            Authorization: `JWT ${localStorage.getItem("authToken")}`,
+          }),
+        },
+        body: formData,
+      });
     } else {
       // ───────────────── NORMAL REQUEST ─────────────────
-      response = await fetch(
-        GRAPHQL_ENDPOINT,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type':
-              'application/json',
+      response = await fetch(GRAPHQL_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
 
-            ...(localStorage.getItem(
-              'authToken'
-            ) && {
-              Authorization: `JWT ${localStorage.getItem(
-                'authToken'
-              )}`,
-            }),
-          },
-          body: JSON.stringify({
-            query: queryString,
-            variables,
+          ...(localStorage.getItem("authToken") && {
+            Authorization: `JWT ${localStorage.getItem("authToken")}`,
           }),
-        }
-      );
+        },
+        body: JSON.stringify({
+          query: queryString,
+          variables,
+        }),
+      });
     }
 
     const result = await response.json();
     // ───────────────── HANDLE ERRORS ─────────────────
-    if (
-      result.errors &&
-      result.errors.length > 0
-    ) {
-      const errorMessage =
-        result.errors[0].message;
-      console.error(
-        'GraphQL Error:',
-        errorMessage
-      );
+    if (result.errors && result.errors.length > 0) {
+      const errorMessage = result.errors[0].message;
+      // console.error(
+      //   'GraphQL Error:',
+      //   errorMessage
+      // );
       throw new Error(errorMessage);
     }
     return result.data;
-
   } catch (error) {
-    console.error(
-      'GraphQL Error:',
-      error
-    );
+    // console.error(
+    //   'GraphQL Error:',
+    //   error
+    // );
     throw error;
   }
 };
 
 // Authentication helper functions
 export const setAuthToken = (token) => {
-  localStorage.setItem('authToken', token);
+  localStorage.setItem("authToken", token);
 };
 
 export const getAuthToken = () => {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem("authToken");
 };
 
 export const removeAuthToken = () => {
-  localStorage.removeItem('authToken');
+  localStorage.removeItem("authToken");
 };
 
 export const isAuthenticated = () => {
@@ -228,6 +188,7 @@ export const GRAPHQL_QUERIES = {
           unit
           sku
           measureValue
+          weight
           isActive
           isFeatured
           isWishlisted
@@ -259,7 +220,6 @@ export const GRAPHQL_QUERIES = {
     }
   `,
 
-
   CREATE_PRODUCT: `
   mutation CreateProduct(
     $categoryId: Int!,
@@ -275,6 +235,7 @@ export const GRAPHQL_QUERIES = {
     $isActive: Boolean,
     $unit: String!,
     $measureValue: Decimal!,
+    $weight: Decimal!,
     $isFeatured: Boolean,
     $storefrontQuantity: Int!,
     $systemQuantity: Int!,
@@ -296,6 +257,7 @@ export const GRAPHQL_QUERIES = {
       isActive: $isActive
       unit: $unit
       measureValue: $measureValue
+      weight: $weight
       isFeatured: $isFeatured
       storefrontQuantity: $storefrontQuantity
       systemQuantity: $systemQuantity
@@ -312,6 +274,7 @@ export const GRAPHQL_QUERIES = {
         deliveryRuleDays
         unit
         measureValue
+        weight
         isFeatured
 
         stock {
@@ -323,10 +286,9 @@ export const GRAPHQL_QUERIES = {
   }
 `,
 
-
   UPDATE_PRODUCT: `
-    mutation UpdateProduct($id: Int!, $name: String, $keywords: [String!], $shortDescription: String, $description: String, $sku: String, $price: Float, $discountPrice: Float,$bulkOrderPrice:Float, $deliveryRuleDays: Int, $isActive: Boolean, $isFeatured: Boolean, $unit: String, $measureValue: Decimal, $categoryId: Int, $storefrontQuantity: Int, $systemQuantity: Int, $storefrontReservedQuantity: Int, $systemReservedQuantity: Int) {
-      updateProduct(id: $id, name: $name, keywords: $keywords, shortDescription: $shortDescription, description: $description, sku: $sku, price: $price, discountPrice: $discountPrice, bulkOrderPrice:$bulkOrderPrice, deliveryRuleDays: $deliveryRuleDays, isActive: $isActive, isFeatured: $isFeatured, unit: $unit, measureValue: $measureValue, categoryId: $categoryId, storefrontQuantity: $storefrontQuantity, systemQuantity: $systemQuantity, storefrontReservedQuantity: $storefrontReservedQuantity, systemReservedQuantity: $systemReservedQuantity) {
+    mutation UpdateProduct($id: Int!, $name: String, $keywords: [String!], $shortDescription: String, $description: String, $sku: String, $price: Float, $discountPrice: Float,$bulkOrderPrice:Float, $deliveryRuleDays: Int, $isActive: Boolean, $isFeatured: Boolean, $unit: String, $measureValue: Decimal, $categoryId: Int, $storefrontQuantity: Int, $systemQuantity: Int, $storefrontReservedQuantity: Int, $systemReservedQuantity: Int, $weight: Decimal) {
+      updateProduct(id: $id, name: $name, keywords: $keywords, shortDescription: $shortDescription, description: $description, sku: $sku, price: $price, discountPrice: $discountPrice, bulkOrderPrice:$bulkOrderPrice, deliveryRuleDays: $deliveryRuleDays, isActive: $isActive, isFeatured: $isFeatured, unit: $unit, measureValue: $measureValue, categoryId: $categoryId, storefrontQuantity: $storefrontQuantity, systemQuantity: $systemQuantity, storefrontReservedQuantity: $storefrontReservedQuantity, systemReservedQuantity: $systemReservedQuantity, weight: $weight) {
         product {
           id
           name
@@ -342,6 +304,7 @@ export const GRAPHQL_QUERIES = {
           isFeatured
           unit
           measureValue
+          weight
           category {
             id
           }
@@ -383,8 +346,8 @@ export const GRAPHQL_QUERIES = {
   `,
 
   GET_STOCK: `
-    query GetStock($productId: Int!) {
-      stock(productId: $productId) {
+    query GetStock($productId: Int!, $inventoryType: String!) {
+      stock(productId: $productId, inventoryType: $inventoryType) {
         quantity
         reservedQuantity
         availableQuantity
@@ -406,6 +369,7 @@ export const GRAPHQL_QUERIES = {
       isActive
       unit
       measureValue
+      weight
       isFeatured
       storefrontReservedQuantity
       systemReservedQuantity
@@ -461,57 +425,20 @@ mutation UpdateStock(
 }
 `,
 
-
-  //   GET_ALL_STOCKS: `
-  //   query GetAllStocks(
-  //     $query: String,
-  //     $first: Int!,
-  //     $after: String
-  //   ) {
-  //     allStocks(
-  //       query: $query,
-  //       first: $first,
-  //       after: $after
-  //     ) {
-
-  //       stocks {
-  //         id
-  //         quantity
-  //         reservedQuantity
-  //         availableQuantity
-  //         isOutOfStock
-
-  //         product {
-  //           id
-  //           name
-  //           price
-  //           unit
-
-  //           images {
-  //             id
-  //             image
-  //           }
-  //         }
-  //       }
-  //          totalProducts
-  //     lowStock
-  //     criticalStock
-  //     outOfStock
-  //       nextCursor
-  //       hasMore
-  //     }
-  //   }
-  // `,
   GET_ALL_STOCKS: `
 query GetAllStocks(
   $query: String,
   $first: Int!,
-  $after: String
+  $after: String,
+  $inventoryType: String,
+  $stockStatus: String
 ) {
   allStocks(
     query: $query,
     first: $first,
-    after: $after
+    after: $after,
+    inventoryType: $inventoryType,
+    stockStatus: $stockStatus
   ) {
 
     stocks {
@@ -605,8 +532,6 @@ query GetAllStocks(
     }
   `,
 
-
-
   GET_DASHBOARD: `
     query AdminDashboard {
       dashboardStats {
@@ -687,39 +612,6 @@ query GetAllStocks(
     }
   `,
 
-
-  //   CREATE_ADMIN_ORDER: `
-  //   mutation CreateAdminOrder($userId: Int,$shippingAddress: String,$orderType: String!,$paymentMethod: String,$purchaseType: String!, $isAdvanceBooking: Boolean!,$advanceDeliveryDatetime: DateTime,$items: [OrderItemInput!]!) {
-  //     createAdminOrder(userId: $userId,shippingAddress: $shippingAddress,orderType: $orderType,paymentMethod: $paymentMethod,purchaseType: $purchaseType,isAdvanceBooking: $isAdvanceBooking,advanceDeliveryDatetime: $advanceDeliveryDatetime,items: $items) {
-  //       order {
-  //         id
-  //         orderNumber
-  //         orderType
-  //         finalAmount
-  //         customerName
-  //         isAdvanceBooking
-  //         advanceDeliveryDatetime
-  //         items {
-  //           product {
-  //             name
-  //           }
-  //           quantity
-  //           subtotal
-  //         }
-  //         status
-  //         createdAt
-  //       }
-  //     }
-  //   }
-  // `,
-
-  // ─── 1. Fix in graphql.js — replace CREATE_ADMIN_ORDER with this ─────────────
-  //
-  // Changes:
-  //  - $userId: Int   (removed ! — optional for Walk-in)
-  //  - Fixed stray $ on purchaseType arg in mutation body
-  //  - $shippingAddress stays optional (no !)
-
   CREATE_ADMIN_ORDER: `
   mutation CreateAdminOrder(
     $customerId: Int,
@@ -766,16 +658,41 @@ query GetAllStocks(
 `,
 
   UPDATE_ORDER_STATUS: `
-    mutation UpdateOrderStatus($orderId: Int!, $status: String!, $note: String) {
-      updateOrderStatus(orderId: $orderId, status: $status, note: $note) {
-        success
-        order {
-          id
-          status
-        }
+  mutation UpdateOrderStatus(
+    $orderId: Int!
+    $status: String!
+    $note: String
+  ) {
+    updateOrderStatus(
+      orderId: $orderId
+      status: $status
+      note: $note
+    ) {
+      success
+      order {
+        id
+        status
       }
     }
-  `,
+  }
+`,
+
+  CANCEL_CUSTOMER_ORDER: `
+  mutation CancelCustomerOrder(
+    $orderId: Int!
+    $cancellationReason: String!
+    $cancellationNote: String
+  ) {
+    cancelCustomerOrder(
+      orderId: $orderId
+      cancellationReason: $cancellationReason
+      cancellationNote: $cancellationNote
+    ) {
+      success
+      message
+    }
+  }
+`,
 
   GET_ALL_ORDERS: `
   query GetAllOrders(
@@ -784,7 +701,7 @@ query GetAllStocks(
     $orderFrom: String
     $query: String
     $orderType: String
-    
+    $date: Date
   ) {
     allOrders(
       first: $first
@@ -792,7 +709,7 @@ query GetAllStocks(
       orderFrom: $orderFrom
       query: $query
       orderType: $orderType
-      
+      date: $date
     ) {
       orders {
         id
@@ -801,8 +718,11 @@ query GetAllStocks(
         purchaseType
         status
         totalAmount
+        approximateWeight
         finalAmount
         createdAt
+        isAdvanceBooking
+        advanceDeliveryDatetime
 
         customer {
           id
@@ -813,6 +733,38 @@ query GetAllStocks(
         }
         notes
         shippingAddress
+
+        borzoOrder {
+          borzoOrderId
+          orderName
+          status
+          statusDescription
+          paymentAmount
+          deliveryFee
+          trackingUrl
+          deliveryStatus
+
+          pickup {
+            address
+            name
+            phone
+          }
+
+          drop {
+            address
+            name
+            phone
+          }
+
+          courier {
+            courierId
+            name
+            phone
+            photoUrl
+            latitude
+            longitude
+          }
+        }
 
         items {
           quantity
@@ -950,16 +902,110 @@ query GetAllStocks(
   `,
 
   CALCULATE_DELIVERY_CHARGE: `
-    mutation CalculateDeliveryCharge($address: String!, $phone: String!) {
-      calculateDeliveryCharge(address: $address, phone: $phone) {
-        success
-        deliveryCharge
-        message
-      }
+  mutation CalculateDeliveryCharge(
+    $address: String!
+    $phone: String!
+    $productSubtotal: Float!
+    $deliveryMode: String!
+    $parcelWeight: Float
+  ) {
+    calculateDeliveryCharge(
+      address: $address
+      phone: $phone
+      productSubtotal: $productSubtotal
+      deliveryMode: $deliveryMode
+      parcelWeight: $parcelWeight
+    ) {
+      success
+      deliveryCharge
+      customerDeliveryCharge
+      deliveryDiscount
+      eligibleForDiscount
+      serviceable
+      message
     }
-  `,
+  }
+`,
+  GET_REFUND_HISTORY: `
+  query GetRefundHistory(
+    $first: Int!
+    $after: String
+  ) {
+    refundHistory(
+      first: $first
+      after: $after
+    ) {
+      total
+      pending
+      approved
+      rejected
+
+      refunds {
+        id
+        orderNumber
+        customerName
+        customerPhone
+        finalAmount
+        status
+        paymentStatus
+        refundStatus
+        refundAmount
+        cancellationReason
+        cancellationNote
+        cancelledAt
+        refundProcessedAt
+        refundAdminNote
+
+        refundProcessedBy {
+          firstName
+        }
+      }
+
+      nextCursor
+      hasMore
+    }
+  }
+`,
+
+  REJECT_REFUND: `
+  mutation RejectRefund(
+    $orderId: Int!
+    $rejectionReason: String!
+  ) {
+    rejectRefund(
+      orderId: $orderId
+      rejectionReason: $rejectionReason
+    ) {
+      success
+      message
+    }
+  }
+`,
+
+  APPROVE_REFUND: `
+  mutation ApproveRefund(
+    $orderId: Int!
+    $refundAmount: Float!
+    $adminNote: String
+  ) {
+    approveRefund(
+      orderId: $orderId
+      refundAmount: $refundAmount
+      adminNote: $adminNote
+    ) {
+      success
+      message
+    }
+  }
+`,
+  SEND_PAYMENT_REMINDER: `
+  mutation SendPaymentReminder($orderId: Int!) {
+    sendPaymentReminder(orderId: $orderId) {
+      success
+      message
+    }
+  }
+`,
 };
-
-
 
 export default graphqlRequest;

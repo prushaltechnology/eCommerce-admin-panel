@@ -141,7 +141,7 @@ export const useEmployees = () => {
                 `Employee ${!record.isActive ? 'activated' : 'deactivated'} successfully`
             );
         } catch (error) {
-            console.log(error);
+            //console.log(error);
         }
 
     };

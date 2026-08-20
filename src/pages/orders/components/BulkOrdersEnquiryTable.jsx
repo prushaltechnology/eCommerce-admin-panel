@@ -29,7 +29,10 @@ const skeletonRows = Array.from({ length: 6 }).map((_, index) => ({
     isSkeleton: true,
 }));
 
-const BulkOrdersEnquiryTable = ({ loading, enquiries, fetchingMore, hasMore, nextCursor, onLoadMore, onViewDetails, onTrackOrder }) => {
+const BulkOrdersEnquiryTable = ({
+    loading, enquiries, fetchingMore, hasMore, nextCursor,
+    onLoadMore, onViewDetails, onTrackOrder, canManageOrders,
+}) => {
     const tableContainerRef = useRef(null);
     useEffect(() => {
         const tableBody =
@@ -192,18 +195,38 @@ const BulkOrdersEnquiryTable = ({ loading, enquiries, fetchingMore, hasMore, nex
                 ),
         },
         {
-            title: 'Date',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date, record) =>
-                record.isSkeleton ? (
-                    <Skeleton.Input active size="small" style={{ width: 140 }} />
-                ) : (
-                    <span style={{ fontSize: 13, color: '#555' }}>
-                        {date ? dayjs(date).format('MMM D, YYYY h:mm A') : '—'}
-                    </span>
-                ),
-            sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+            title: 'Delivery Date',
+            key: 'deliveryDate',
+
+            render: (_, record) => {
+                if (record.isSkeleton) {
+                    return (
+                        <Skeleton.Input
+                            active
+                            size="small"
+                            style={{ width: 160 }}
+                        />
+                    );
+                }
+
+                const deliveryDate = record.isAdvanceBooking
+                    ? record.advanceDeliveryDatetime
+                    : record.createdAt;
+
+                return dayjs(deliveryDate).format('DD/MM/YYYY h:mm A');
+            },
+
+            sorter: (a, b) => {
+                const dateA = a.isAdvanceBooking
+                    ? a.advanceDeliveryDatetime
+                    : a.createdAt;
+
+                const dateB = b.isAdvanceBooking
+                    ? b.advanceDeliveryDatetime
+                    : b.createdAt;
+
+                return new Date(dateA) - new Date(dateB);
+            },
         },
         {
             title: 'Status',
@@ -241,13 +264,15 @@ const BulkOrdersEnquiryTable = ({ loading, enquiries, fetchingMore, hasMore, nex
                             icon={<EyeOutlined />}
                             onClick={() => onViewDetails(record)}
                         />
-                        <Button
-                            type="default"
-                            size="small"
-                            icon={<TruckOutlined />}
-                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
-                            onClick={() => onTrackOrder(record)}
-                        />
+                        {canManageOrders && (
+                            <Button
+                                type="default"
+                                size="small"
+                                icon={<TruckOutlined />}
+                                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
+                                onClick={() => onTrackOrder(record)}
+                            />
+                        )}
                     </Space>
                 );
             },

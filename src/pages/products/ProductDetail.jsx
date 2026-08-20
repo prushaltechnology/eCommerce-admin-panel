@@ -134,6 +134,12 @@ const ProductDetail = () => {
           <Descriptions.Item label="Discount Price">
             {product.discountPrice ? formatPrice(product.discountPrice) : "-"}
           </Descriptions.Item>
+          <Descriptions.Item label="Bulk Price">
+            {product.bulkOrderPrice ? formatPrice(product.bulkOrderPrice) : "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Delivery Rule (Days)">
+            {product.deliveryRuleDays != null ? product.deliveryRuleDays : "-"}
+          </Descriptions.Item>
           <Descriptions.Item label="Status">
             <Tag color={product.isActive ? "green" : "red"}>
               {product.isActive ? "Active" : "Inactive"}
@@ -141,6 +147,12 @@ const ProductDetail = () => {
           </Descriptions.Item>
           <Descriptions.Item label="Category">
             {product.category?.name}
+          </Descriptions.Item>
+          <Descriptions.Item label="Measure Value & Unit">
+            {product.measureValue != null && product.unit != null ? `${product.measureValue} ${product.unit}` : "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Approximate Weight">
+            {product.weight != null ? `${product.weight} kg` : "-"}
           </Descriptions.Item>
           <Descriptions.Item label="Description" span={2}>
             {product.description || "-"}
@@ -153,9 +165,7 @@ const ProductDetail = () => {
               <Tag key={index}>{keyword}</Tag>
             )) || "-"}
           </Descriptions.Item>
-          <Descriptions.Item label="Delivery Rule (Days)">
-            {product.deliveryRuleDays != null ? product.deliveryRuleDays : "-"}
-          </Descriptions.Item>
+
         </Descriptions>
       </Card>
 
@@ -236,12 +246,38 @@ const ProductDetail = () => {
         open={imageModalVisible}
         footer={null}
         onCancel={() => setImageModalVisible(false)}
+        centered
+        closeIcon={
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "#fff",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+            }}
+          >
+            ✕
+          </span>
+        }
+        styles={{
+          body: { padding: 0 },
+          content: { padding: 0, overflow: "hidden" },
+        }}
       >
-        <Image
+        <img
           src={`${import.meta.env.VITE_GRAPHQL_URI.replace('/graphql/', '').replace('/graphql', '')}/media/${imageList[currentImageIndex]?.image}`}
+          alt="product preview"
+          style={{
+            width: "100%",
+            display: "block",
+            borderRadius: 8,
+          }}
         />
       </Modal>
-
     </div>
   );
 };

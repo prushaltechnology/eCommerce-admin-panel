@@ -1,33 +1,3 @@
-// import CryptoJS from "crypto-js";
-
-// export const getDecryptedUser = () => {
-//   try {
-//     const encryptedUser = localStorage.getItem("user");
-//     //console.log("Encrypted User from LS:", encryptedUser);
-//     if (!encryptedUser) return null;
-
-//     const encryptionKey = import.meta.env.VITE_USER_ENCRYPTION_KEY.trim(); // ⚠️ Trim spaces
-//     //console.log("Encryption Key:", encryptionKey);
-
-//     const bytes = CryptoJS.AES.decrypt(encryptedUser, encryptionKey);
-//     const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
-
-//     if (!decryptedText) {
-//      console.error("Decryption failed, wrong key or corrupted data");
-//       return null;
-//     }
-
-//     const decryptedUser = JSON.parse(decryptedText);
-//     //console.log("Decrypted User:", decryptedUser);
-//     return decryptedUser;
-//   } catch (error) {
-//    console.error("Failed to decrypt user info:", error);
-//     localStorage.removeItem("user");
-//     return null;
-//   }
-// };
-
-
 import CryptoJS from "crypto-js";
 
 export const getDecryptedUser = () => {

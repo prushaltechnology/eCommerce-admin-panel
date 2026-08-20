@@ -1,5 +1,5 @@
 // Orders API Functions
-import { GRAPHQL_QUERIES, graphqlRequest } from './graphql';
+import { GRAPHQL_QUERIES, graphqlRequest } from "./graphql";
 
 // Get all customers for manual order
 export const getCustomers = async (search = null, after = null, first = 10) => {
@@ -7,7 +7,7 @@ export const getCustomers = async (search = null, after = null, first = 10) => {
     const variables = {
       first,
       ...(search ? { search } : {}),
-      ...(after ? { after } : {})
+      ...(after ? { after } : {}),
     };
     const data = await graphqlRequest(GRAPHQL_QUERIES.GET_CUSTOMERS, variables);
     return {
@@ -19,7 +19,7 @@ export const getCustomers = async (search = null, after = null, first = 10) => {
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to fetch customers'
+      message: error.message || "Failed to fetch customers",
     };
   }
 };
@@ -27,20 +27,20 @@ export const getCustomers = async (search = null, after = null, first = 10) => {
 // Get all products for manual order
 export const getProductsForOrder = async () => {
   try {
-    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_PRODUCTS_SIMPLE, { first: 5 });
+    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_PRODUCTS_SIMPLE, {
+      first: 5,
+    });
     return {
       success: true,
-      products: data.products?.products || []
+      products: data.products?.products || [],
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to fetch products'
+      message: error.message || "Failed to fetch products",
     };
   }
 };
-
-
 
 export const createAdminOrder = async (
   customerId,
@@ -52,31 +52,27 @@ export const createAdminOrder = async (
   notes,
   isAdvanceBooking,
   advanceDeliveryDatetime,
-  deliveryCharge = 0
+  deliveryCharge = 0,
 ) => {
+  const response = await graphqlRequest(GRAPHQL_QUERIES.CREATE_ADMIN_ORDER, {
+    customerId: customerId,
 
-  const response = await graphqlRequest(
-    GRAPHQL_QUERIES.CREATE_ADMIN_ORDER,
-    {
-      customerId: customerId,
+    shippingAddress,
 
-      shippingAddress,
+    items,
 
-      items,
+    orderType,
 
-      orderType,
+    paymentMethod,
+    purchaseType,
+    notes,
 
-      paymentMethod,
-      purchaseType,
-      notes,
+    isAdvanceBooking,
 
-      isAdvanceBooking,
+    advanceDeliveryDatetime,
 
-      advanceDeliveryDatetime,
-
-      deliveryCharge,
-    }
-  );
+    deliveryCharge,
+  });
 
   return {
     success: true,
@@ -84,55 +80,56 @@ export const createAdminOrder = async (
   };
 };
 
-
-export const calculateDeliveryCharge = async (address, phone) => {
+export const calculateDeliveryCharge = async (
+  address,
+  phone,
+  productSubtotal,
+  deliveryMode,
+  parcelWeight = null,
+) => {
   try {
-    const data = await graphqlRequest(GRAPHQL_QUERIES.CALCULATE_DELIVERY_CHARGE, {
-      address,
-      phone,
-    });
+    const data = await graphqlRequest(
+      GRAPHQL_QUERIES.CALCULATE_DELIVERY_CHARGE,
+      {
+        address,
+        phone,
+        productSubtotal,
+        deliveryMode,
+        parcelWeight,
+      },
+    );
+
     const result = data?.calculateDeliveryCharge;
+
     return {
       success: result?.success ?? false,
       deliveryCharge: result?.deliveryCharge ?? 0,
-      message: result?.message || '',
+      customerDeliveryCharge: result?.customerDeliveryCharge ?? 0,
+      deliveryDiscount: result?.deliveryDiscount ?? 0,
+      eligibleForDiscount: result?.eligibleForDiscount ?? false,
+      serviceable: result?.serviceable ?? false,
+      message: result?.message || "",
     };
   } catch (error) {
     return {
       success: false,
       deliveryCharge: 0,
-      message: error.message || 'Failed to calculate delivery charge',
+      customerDeliveryCharge: 0,
+      deliveryDiscount: 0,
+      eligibleForDiscount: false,
+      serviceable: false,
+      message: error.message || "Failed to calculate delivery charge",
     };
   }
 };
 
-
-// Get all orders
-// export const getAllOrders = async (orderFrom = null, query = null, orderType = null) => {
-//   try {
-//     const variables = {
-//       ...(orderFrom ? { orderFrom } : {}),
-//       ...(query ? { query } : {}),
-//       ...(orderType ? { orderType } : {})
-//     };
-//     const data = await graphqlRequest(GRAPHQL_QUERIES.GET_ALL_ORDERS, variables);
-//     return {
-//       success: true,
-//       orders: data.allOrders || []
-//     };
-//   } catch (error) {
-//     return {
-//       success: false,
-//       message: error.message || 'Failed to fetch orders'
-//     };
-//   }
-// };
 export const getAllOrders = async (
   orderFrom = null,
   query = null,
   orderType = null,
   after = null,
-  first = 10
+  first = 10,
+  date = null,
 ) => {
   try {
     const variables = {
@@ -140,12 +137,13 @@ export const getAllOrders = async (
       ...(after ? { after } : {}),
       ...(orderFrom ? { orderFrom } : {}),
       ...(query ? { query } : {}),
-      ...(orderType ? { orderType } : {})
+      ...(orderType ? { orderType } : {}),
+      ...(date ? { date } : {}),
     };
 
     const data = await graphqlRequest(
       GRAPHQL_QUERIES.GET_ALL_ORDERS,
-      variables
+      variables,
     );
 
     return {
@@ -158,13 +156,12 @@ export const getAllOrders = async (
       cancelledOrders: data.allOrders?.cancelledOrders ?? 0,
       revenue: data.allOrders?.revenue ?? 0,
       nextCursor: data.allOrders?.nextCursor || null,
-      hasMore: data.allOrders?.hasMore || false
+      hasMore: data.allOrders?.hasMore || false,
     };
-
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to fetch orders'
+      message: error.message || "Failed to fetch orders",
     };
   }
 };
@@ -175,42 +172,76 @@ export const updateOrderStatus = async (orderId, status, note = "") => {
     const data = await graphqlRequest(GRAPHQL_QUERIES.UPDATE_ORDER_STATUS, {
       orderId: parseInt(orderId, 10),
       status,
-      note
+      note,
     });
 
     if (data && data.updateOrderStatus) {
       if (data.updateOrderStatus.success === false) {
         return {
           success: false,
-          message: 'Failed to update order status'
+          message: "Failed to update order status",
         };
       }
       return {
         success: true,
-        order: data.updateOrderStatus.order
+        order: data.updateOrderStatus.order,
       };
     }
 
     return {
       success: false,
-      message: 'Failed to update order status'
+      message: "Failed to update order status",
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to update order status'
+      message: error.message || "Failed to update order status",
     };
   }
 };
 
-
-export const addShippingAddress = async (
-  customerId,
-  values
+export const cancelCustomerOrder = async (
+  orderId,
+  cancellationReason,
+  cancellationNote = ""
 ) => {
-
   try {
+    const data = await graphqlRequest(
+      GRAPHQL_QUERIES.CANCEL_CUSTOMER_ORDER,
+      {
+        orderId: parseInt(orderId, 10),
+        cancellationReason,
+        cancellationNote,
+      }
+    );
 
+    const result = data?.cancelCustomerOrder;
+
+    if (!result) {
+      return {
+        success: false,
+        message: "Failed to cancel order",
+      };
+    }
+
+    return {
+      success: result.success ?? false,
+      message:
+        result.message ||
+        (result.success
+          ? "Order cancelled successfully"
+          : "Failed to cancel order"),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Failed to cancel order",
+    };
+  }
+};
+
+export const addShippingAddress = async (customerId, values) => {
+  try {
     const mutation = `
       mutation AddShippingAddress(
         $customerId: ID!,
@@ -244,45 +275,34 @@ export const addShippingAddress = async (
     `;
 
     const variables = {
-
-      customerId: (customerId),
+      customerId: customerId,
       addressLine: values.addressLine,
       city: values.city,
       state: values.state,
       pincode: values.pincode,
-      landmark: values.landmark || '',
+      landmark: values.landmark || "",
     };
 
-    const data = await graphqlRequest(
-      mutation,
-      variables
-    );
+    const data = await graphqlRequest(mutation, variables);
 
     if (data?.addShippingAddress?.address) {
-
       return {
         success: true,
-        address:
-          data.addShippingAddress.address,
+        address: data.addShippingAddress.address,
       };
     }
 
     return {
       success: false,
-      message: 'Failed to add address',
+      message: "Failed to add address",
     };
-
   } catch (error) {
-
     return {
       success: false,
-      message:
-        error.message ||
-        'Failed to add address',
+      message: error.message || "Failed to add address",
     };
   }
 };
-
 
 // Fetch order tracking data
 export const getOrderTracking = async (orderId) => {
@@ -301,6 +321,43 @@ export const getOrderTracking = async (orderId) => {
     const data = await graphqlRequest(query, { orderId: Number(orderId) });
     return { success: true, tracking: data.orderTracking || [] };
   } catch (error) {
-    return { success: false, message: error.message || 'Failed to fetch tracking' };
+    return {
+      success: false,
+      message: error.message || "Failed to fetch tracking",
+    };
+  }
+};
+// Send payment reminder
+export const sendPaymentReminder = async (orderId) => {
+  try {
+    const data = await graphqlRequest(
+      GRAPHQL_QUERIES.SEND_PAYMENT_REMINDER,
+      {
+        orderId: parseInt(orderId, 10),
+      }
+    );
+
+    const result = data?.sendPaymentReminder;
+
+    if (!result) {
+      return {
+        success: false,
+        message: "Failed to send payment reminder",
+      };
+    }
+
+    return {
+      success: result.success ?? false,
+      message:
+        result.message ||
+        (result.success
+          ? "Payment reminder sent successfully"
+          : "Failed to send payment reminder"),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Failed to send payment reminder",
+    };
   }
 };

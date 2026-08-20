@@ -19,6 +19,7 @@ import {
 } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createCategory } from '../../api/categories';
 import ImagePreviewModal from '../../components/modals/ImagePreviewModal';
 import ProductModal from '../../components/modals/ProductModal';
 import usePermissions from '../../hooks/usePermissions';
@@ -30,7 +31,8 @@ const { Title, Text } = Typography;
 
 const AllProducts = () => {
   const navigate = useNavigate();
-  const { canUpdate } = usePermissions();
+  const { canView, canUpdate } = usePermissions();
+  const canViewProducts = canView('product');
   const canManageProducts = canUpdate('product');
 
   const {
@@ -162,6 +164,7 @@ const AllProducts = () => {
       isActive: record.isActive,
       unit: record.unit,
       measureValue: record.measureValue,
+      weight: record.weight,
       isFeatured: record.isFeatured,
       storefrontQuantity: record.storefrontStock?.quantity ?? 0,
       systemQuantity: record.systemStock?.quantity ?? 0,
@@ -178,7 +181,7 @@ const AllProducts = () => {
           : `${import.meta.env.VITE_GRAPHQL_URI.replace('/graphql/', '').replace('/graphql', '')}/media/${img.image}`;
         return {
           uid: `-${index}`,
-          id: img.id, // Important: include the image ID for deletion
+          id: img.id,
           name: img.image || `image-${index}.png`,
           status: 'done',
           url: imageUrl,
@@ -200,6 +203,55 @@ const AllProducts = () => {
       }
     } catch {
       message.error('Failed to delete product');
+    }
+  };
+
+  const handleCreateCategory = async (values) => {
+    try {
+      let imageBase64 = null;
+
+      if (values.image) {
+        const file = values.image;
+
+        imageBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+      }
+
+      const payload = {
+        name: values.name,
+        description: values.description,
+        isActive: values.isActive,
+        parentId:
+          values.parentId !== undefined &&
+            values.parentId !== null &&
+            values.parentId !== ''
+            ? Number(values.parentId)
+            : null,
+      };
+
+      if (imageBase64) {
+        payload.image = imageBase64;
+      }
+
+      const res = await createCategory(payload);
+
+      if (res.success) {
+        return res;
+      }
+
+      message.error(
+        res.message || 'Failed to create category'
+      );
+
+      return null;
+    } catch (error) {
+      //console.error(error);
+      message.error('Something went wrong');
+      return null;
     }
   };
 
@@ -561,9 +613,14 @@ const AllProducts = () => {
           );
         }
 
-        if (canManageProducts) {
-          return (
-            <Space size="small">
+        // Nothing to show if the user can neither view nor manage products
+        if (!canViewProducts && !canManageProducts) {
+          return null;
+        }
+
+        return (
+          <Space size="small">
+            {(canViewProducts || canManageProducts) && (
               <Button
                 size="small"
                 icon={<EyeOutlined />}
@@ -573,29 +630,31 @@ const AllProducts = () => {
                   })
                 }
               />
+            )}
 
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => handleEdit(record)}
-              />
-
-              <Popconfirm
-                title="Delete Product"
-                description="Are you sure you want to delete this product?"
-                onConfirm={() => handleDelete(record.id)}
-              >
+            {canManageProducts && (
+              <>
                 <Button
                   size="small"
-                  danger
-                  icon={<DeleteOutlined />}
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record)}
                 />
-              </Popconfirm>
-            </Space>
-          );
-        }
 
-        return null;
+                <Popconfirm
+                  title="Delete Product"
+                  description="Are you sure you want to delete this product?"
+                  onConfirm={() => handleDelete(record.id)}
+                >
+                  <Button
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                  />
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        );
       },
     },
   ];
@@ -761,6 +820,9 @@ const AllProducts = () => {
           title={editingProduct ? 'Edit Product' : 'Add Product'}
           onDeleteImage={deleteProductImage}
           onAddImage={addProductImage}
+
+          onCreateCategory={handleCreateCategory}
+          onRefreshCategories={fetchCategories}
         />
       )}
 

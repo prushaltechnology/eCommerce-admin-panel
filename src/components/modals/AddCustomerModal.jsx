@@ -8,61 +8,61 @@ const AddCustomerModal = ({ open, onCancel, onSuccess }) => {
 
   const handleSubmit = async (values) => {
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
+    try {
 
-    const data = await graphqlRequest(
-      GRAPHQL_QUERIES.ADMIN_CREATE_CUSTOMER,
-      {
-        email: values.email,
-        password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        phone: values.phone,
+      const data = await graphqlRequest(
+        GRAPHQL_QUERIES.ADMIN_CREATE_CUSTOMER,
+        {
+          email: values.email,
+          password: values.password,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          phone: values.phone,
 
-        city: values.city,
-        state: values.state,
-        pincode: values.pincode,
-        landmark: values.landmark || '',
+          city: values.city,
+          state: values.state,
+          pincode: values.pincode,
+          landmark: values.landmark || '',
+        }
+      );
+
+      if (
+        data?.adminCreateCustomer?.customer?.id
+      ) {
+
+        message.success(
+          'Customer created successfully'
+        );
+
+        form.resetFields();
+
+        onSuccess?.(
+          data.adminCreateCustomer.customer
+        );
+
+        onCancel();
+
+      } else {
+
+        throw new Error(
+          'Failed to create customer'
+        );
       }
-    );
 
-    if (
-      data?.adminCreateCustomer?.customer?.id
-    ) {
+    } catch (error) {
 
-      message.success(
-        'Customer created successfully'
+      message.error(
+        'Failed to create customer: ' +
+        error.message
       );
 
-      form.resetFields();
+    } finally {
 
-      onSuccess?.(
-        data.adminCreateCustomer.customer
-      );
-
-      onCancel();
-
-    } else {
-
-      throw new Error(
-        'Failed to create customer'
-      );
+      setLoading(false);
     }
-
-  } catch (error) {
-
-    message.error(
-      'Failed to create customer: ' +
-      error.message
-    );
-
-  } finally {
-
-    setLoading(false);
-  }
-};
+  };
   return (
     <Modal
       title="Add New Customer"
@@ -203,13 +203,13 @@ const AddCustomerModal = ({ open, onCancel, onSuccess }) => {
 
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={() => {
+            <Button size="small" onClick={() => {
               form.resetFields();
               onCancel();
             }}>
               Cancel
             </Button>
-            <Button type="primary" htmlType="submit" loading={loading}>
+            <Button size="small" type="primary" htmlType="submit" loading={loading}>
               Create Customer
             </Button>
           </Space>

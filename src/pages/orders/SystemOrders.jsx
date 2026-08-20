@@ -1,6 +1,5 @@
 ﻿import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Typography } from 'antd';
-import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import OrderDetailsModal from '../../components/modals/OrderDetailsModal';
 import useOrders from '../../hooks/useOrders';
@@ -15,7 +14,7 @@ const SystemOrders = () => {
   const canManageOrders = canUpdate('order', 'system_order');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateRange, setDateRange] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [newStatus, setNewStatus] = useState('');
@@ -24,20 +23,37 @@ const SystemOrders = () => {
   //const [trackingLoading, setTrackingLoading] = useState(false);
   //const [trackingData, setTrackingData] = useState([]);
   const [manualOrderVisible, setManualOrderVisible] = useState(false);
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
 
-  const { orders, loading, fetchOrders, fetchMoreOrders, ordersHasMore, changeOrderStatus, ordersStats } = useOrders();
+  const {
+    orders,
+    loading,
+    fetchOrders,
+    fetchMoreOrders,
+    ordersHasMore,
+    changeOrderStatus,
+    cancelOrder,
+    ordersStats,
+  } = useOrders();
+
   const [tableScrollLoading, setTableScrollLoading] = useState(false);
   const tableWrapperRef = useRef(null);
   const { Title } = Typography;
 
+  // Convert selected date to API-ready date string
+  const getDateParam = () => {
+    if (!selectedDate) return null;
+    return selectedDate.format('YYYY-MM-DD');
+  };
 
+  // Debounced search + single date filter
   useEffect(() => {
     const timeout = setTimeout(() => {
-      fetchOrders('admin_panel', searchText || null);
+      fetchOrders('admin_panel', searchText || null, getDateParam());
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [fetchOrders, searchText]);
+  }, [fetchOrders, searchText, selectedDate]);
 
   useEffect(() => {
     const tableBody =
@@ -139,15 +155,29 @@ const SystemOrders = () => {
   //   }
   // };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    let matchesDate = true;
-    if (dateRange && dateRange.length === 2) {
-      const orderDate = dayjs(order.createdAt);
-      matchesDate = orderDate.isAfter(dateRange[0].startOf('day'))
-        && orderDate.isBefore(dateRange[1].endOf('day'));
+  const handleCancelOrder = async (
+    order,
+    cancellationReason = 'Cancelled by admin',
+    cancellationNote = '',
+  ) => {
+    if (!canManageOrders || !order?.id) return;
+
+    try {
+      setCancellingOrderId(order.id);
+
+      return await cancelOrder(
+        order.id,
+        cancellationReason,
+        cancellationNote,
+      );
+    } finally {
+      setCancellingOrderId(null);
     }
-    return matchesStatus && matchesDate;
+  };
+
+  // Status filter is still client-side; date filtering is now handled by the backend
+  const filteredOrders = orders.filter((order) => {
+    return statusFilter === 'all' || order.status === statusFilter;
   });
 
   return (
@@ -201,10 +231,10 @@ const SystemOrders = () => {
       <SystemOrdersFilters
         searchText={searchText}
         statusFilter={statusFilter}
-        dateRange={dateRange}
+        selectedDate={selectedDate}
         onSearch={setSearchText}
         onStatusChange={setStatusFilter}
-        onDateChange={setDateRange}
+        onDateChange={setSelectedDate}
       />
 
 
@@ -238,9 +268,12 @@ const SystemOrders = () => {
             loading={loading}
             orders={filteredOrders}
             onViewDetails={handleViewDetails}
+            onCancelOrder={handleCancelOrder}
+            cancellingOrderId={cancellingOrderId}
+            canManageOrders={canManageOrders}
             hasMore={ordersHasMore}
-
-          //onTrackOrder={handleTrackOrder}
+            tableScrollLoading={tableScrollLoading}
+            onLoadMore={fetchMoreOrders}
           />
 
           {ordersHasMore && tableScrollLoading && (
@@ -302,7 +335,7 @@ const SystemOrders = () => {
           onClose={() => setManualOrderVisible(false)}
           onOrderCreated={() => {
             setManualOrderVisible(false);
-            fetchOrders('admin_panel');
+            fetchOrders('admin_panel', searchText || null, getDateParam());
           }}
         />
       )}

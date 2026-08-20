@@ -120,11 +120,6 @@ const Categories = () => {
 
     try {
       setLoading(true);
-      // Convert image file to base64 if exists
-      let imageBase64 = null;
-      if (imageList[0]?.originFileObj) {
-        imageBase64 = await fileToBase64(imageList[0].originFileObj);
-      }
 
       const payload = {
         name: values.name,
@@ -138,9 +133,15 @@ const Categories = () => {
             : null,
       };
 
-      if (imageBase64) {
-        payload.image = imageBase64;
+      // Determine image state: new upload, explicit removal, or unchanged
+      if (imageList[0]?.originFileObj) {
+        // User picked a new file
+        payload.image = await fileToBase64(imageList[0].originFileObj);
+      } else if (imageList.length === 0 && editingCategory?.image) {
+        // User removed a previously-existing image
+        payload.image = null;
       }
+      // else: no `image` key at all -> backend leaves the existing image untouched
 
       let res;
 
@@ -411,33 +412,23 @@ const Categories = () => {
         if (record.isSkeleton) {
           return (
             <Space size="small">
-
-              <Skeleton.Button
-                active
-                size="small"
-                shape="circle"
-              />
-
-              <Skeleton.Button
-                active
-                size="small"
-                shape="circle"
-              />
-
+              <Skeleton.Button active size="small" shape="circle" />
+              <Skeleton.Button active size="small" shape="circle" />
             </Space>
           );
         }
 
+        if (!canManageCategories) {
+          return null;
+        }
+
         return (
           <Space size="small">
-
             <Button
               size='small'
-
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
-            >
-            </Button>
+            />
 
             <Popconfirm
               title="Delete Category"
@@ -448,13 +439,10 @@ const Categories = () => {
             >
               <Button
                 size='small'
-
                 danger
                 icon={<DeleteOutlined />}
-              >
-              </Button>
+              />
             </Popconfirm>
-
           </Space>
         );
       },

@@ -31,11 +31,27 @@ const HeroSection = () => {
   }, []);
 
   const loadData = async () => {
-
     const res = await getHeroSections();
 
     if (res.success && res.heroes) {
-      form.setFieldsValue(res.heroes);
+
+      const data = { ...res.heroes };
+
+      // Convert image URL to Upload fileList format
+      if (data.heroImage) {
+        data.heroImage = [
+          {
+            uid: '-1',
+            name: 'hero-image',
+            status: 'done',
+            url: data.heroImage,
+          },
+        ];
+      } else {
+        data.heroImage = [];
+      }
+
+      form.setFieldsValue(data);
     }
   };
 
@@ -48,7 +64,7 @@ const HeroSection = () => {
       const payload = {
         ...values,
         heroImage:
-          values.heroImage?.fileList?.[0]?.originFileObj || null,
+          values.heroImage?.[0]?.originFileObj || null,
       };
 
       const res = await updateHero(payload);
@@ -133,16 +149,23 @@ const HeroSection = () => {
           label="Hero Image"
           name="heroImage"
           valuePropName="fileList"
+          getValueFromEvent={(e) => {
+            if (Array.isArray(e)) {
+              return e;
+            }
+            return e?.fileList || [];
+          }}
         >
-
-          <Upload beforeUpload={() => false}>
+          <Upload
+            beforeUpload={() => false}
+            listType="picture"
+            maxCount={1}
+          >
             <Button>
               Upload Image
             </Button>
           </Upload>
-
         </Form.Item>
-
         <SaveButton loading={loading}>
           Save Hero
         </SaveButton>

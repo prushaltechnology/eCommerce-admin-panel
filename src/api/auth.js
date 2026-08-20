@@ -100,7 +100,7 @@ export const getCurrentUser = () => {
       permissions: normalizePermissions(user.permissions),
     };
   } catch (error) {
-    console.error('Error getting current user:', error);
+    //console.error('Error getting current user:', error);
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
     return null;

@@ -1,102 +1,450 @@
-/* ===== Sidebar Background =====
+/* =========================================================
+   SIDEBAR BACKGROUND
+   ========================================================= */
+
 .ant-layout-sider {
-    background: #6f79d8;
+  background: #6f79d8 !important;
 }
 
-/* ===== Menu Base ===== */
+
+/* =========================================================
+   SIDEBAR MAIN CONTAINER
+   ========================================================= */
+
+.premium-sidebar {
+  background: #6f79d8;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.premium-sidebar-brand {
+  user-select: none;
+}
+
+
+/* =========================================================
+   MENU BASE
+   ========================================================= */
+
 .premium-sidebar-menu {
-    background: transparent !important;
-    font-size: 12px;
-    font-weight: 500;
+  background: transparent !important;
+  border-inline-end: none !important;
+
+  font-size: 12px;
+  font-weight: 500;
 }
 
-/* ===== Menu Item ===== */
+
+/* =========================================================
+   MAIN MENU ITEMS
+   ========================================================= */
+
 .premium-sidebar-menu .ant-menu-item,
 .premium-sidebar-menu .ant-menu-submenu-title {
-    height: 36px !important;
-    line-height: 36px !important;
-    margin: 4px 10px !important;
-    border-radius: 8px !important;
-    transition: all .25s ease;
-}
-.ant-menu-light .ant-menu-submenu-selected > .ant-menu-submenu-title {
-    color: #ffffff !important;
-}
-/* ===== Sub Menu Item ===== */
-.premium-sidebar-menu .ant-menu-sub .ant-menu-item {
-    height: 32px !important;
-    line-height: 32px !important;
-    font-size: 11.5px;
+  height: 36px !important;
+  line-height: 36px !important;
+
+  margin: 4px 10px !important;
+
+  border-radius: 8px !important;
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
 }
 
-/* ===== Hover Effect ===== */
-.premium-sidebar-menu .ant-menu-item:hover,
-.premium-sidebar-menu .ant-menu-submenu-title:hover {
-    background: rgba(255,255,255,0.15) !important;
+
+/* =========================================================
+   SUB MENU ITEMS INSIDE SIDEBAR
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-sub
+  .ant-menu-item {
+  height: 32px !important;
+  line-height: 32px !important;
+
+  font-size: 11.5px;
 }
 
-.premium-sidebar-menu .ant-menu-item-selected {
-    background: rgba(255,255,255,0.15) !important;
-    color: #ffffff !important;
-    font-weight: 600;
+
+/* =========================================================
+   MAIN MENU HOVER
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-item:hover,
+.premium-sidebar-menu
+  .ant-menu-submenu-title:hover {
+  background:
+    rgba(255, 255, 255, 0.15) !important;
+
+  color: #ffffff !important;
 }
 
-.premium-sidebar-menu .ant-menu-item-selected .anticon {
-    color: #ffffff !important;
+
+/* =========================================================
+   MAIN MENU SELECTED
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-item-selected {
+  background:
+    rgba(255, 255, 255, 0.15) !important;
+
+  color: #ffffff !important;
+
+  font-weight: 600;
 }
 
-/* ===== Default Text Color ===== */
-.premium-sidebar-menu .ant-menu-item,
-.premium-sidebar-menu .ant-menu-submenu-title {
-    color: #eaeaff !important;
+
+/* =========================================================
+   MAIN SIDEBAR TEXT COLOR
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-item,
+.premium-sidebar-menu
+  .ant-menu-submenu-title {
+  color: #eaeaff !important;
 }
 
-/* ===== Icon Size ===== */
+
+/* =========================================================
+   SELECTED TEXT
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-item-selected {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   MAIN SIDEBAR ICONS
+   ========================================================= */
+
 .premium-sidebar-menu .anticon {
-    font-size: 15px;
+  font-size: 15px;
 }
 
-/* ===== Scrollbar Styling ===== */
-.ant-layout-sider::-webkit-scrollbar {
-    width: 5px;
+
+/* =========================================================
+   SELECTED ICON
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-item-selected
+  .anticon {
+  color: #ffffff !important;
 }
 
-.ant-layout-sider::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.3);
-    border-radius: 10px;
-} */
 
-/* Keep structure, remove color overrides */
+/* =========================================================
+   SUBMENU ARROW
+   ========================================================= */
 
-.premium-sidebar-menu {
-    background: transparent !important;
-    font-size: 12px;
-    font-weight: 500;
+.premium-sidebar-menu
+  .ant-menu-submenu-arrow {
+  color:
+    rgba(255, 255, 255, 0.8) !important;
 }
 
-.premium-sidebar-menu .ant-menu-item,
-.premium-sidebar-menu .ant-menu-submenu-title {
-    height: 36px !important;
-    line-height: 36px !important;
-    margin: 4px 10px !important;
-    border-radius: 8px !important;
-    transition: all .25s ease;
+
+/* =========================================================
+   INLINE SUBMENU BACKGROUND
+   ========================================================= */
+
+.premium-sidebar-menu
+  .ant-menu-sub {
+  background: transparent !important;
 }
 
-/* ✅ Keep hover effect but don't force color */
-.premium-sidebar-menu .ant-menu-item:hover,
-.premium-sidebar-menu .ant-menu-submenu-title:hover {
-    background: rgba(255,255,255,0.15) !important;
+
+/* =========================================================
+   SIDEBAR SCROLLBAR
+   ========================================================= */
+
+/* Firefox */
+
+.premium-sidebar-scroll {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(255, 255, 255, 0.35)
+    transparent;
 }
 
-/* ✅ Keep selected style but not color override */
-.premium-sidebar-menu .ant-menu-item-selected {
-    background: rgba(255,255,255,0.15) !important;
-    font-weight: 600;
+
+/* Chrome / Edge / Safari */
+
+.premium-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* ❌ REMOVE THESE */
+
+.premium-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+.premium-sidebar-scroll::-webkit-scrollbar-thumb {
+  background:
+    rgba(255, 255, 255, 0.35);
+
+  border-radius: 10px;
+
+  min-height: 40px;
+}
+
+
+.premium-sidebar-scroll
+  ::-webkit-scrollbar-thumb:hover {
+  background:
+    rgba(255, 255, 255, 0.55);
+}
+
+
+/* =========================================================
+   ANT DESIGN POPUP SUBMENU
+   ========================================================= */
+
 /*
-color: #eaeaff !important;
-color: #ffffff !important;
+   IMPORTANT:
+
+   Ant Design renders the submenu popup outside
+   `.premium-sidebar-menu`.
+
+   Therefore we MUST target:
+   `.ant-menu-submenu-popup`
+   directly.
 */
+
+
+.ant-menu-submenu-popup {
+  background: #ffffff !important;
+
+  padding: 4px !important;
+
+  border-radius: 10px !important;
+
+  box-shadow:
+    0 8px 24px
+    rgba(0, 0, 0, 0.12) !important;
+}
+
+
+/* =========================================================
+   POPUP MENU
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu {
+  background: #ffffff !important;
+
+  border-radius: 10px !important;
+
+  padding: 0 !important;
+}
+
+
+/* =========================================================
+   POPUP MENU ITEMS
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item,
+.ant-menu-submenu-popup
+  .ant-menu-submenu-title {
+  color: #262626 !important;
+
+  background:
+    transparent !important;
+
+  height: 36px !important;
+  line-height: 36px !important;
+
+  margin: 2px 0 !important;
+
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+
+  border-radius: 6px !important;
+
+  font-size: 12px !important;
+  font-weight: 500 !important;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease !important;
+}
+
+
+/* =========================================================
+   POPUP TEXT
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item
+  .ant-menu-title-content,
+.ant-menu-submenu-popup
+  .ant-menu-submenu-title
+  .ant-menu-title-content {
+  color: #262626 !important;
+}
+
+
+/* =========================================================
+   POPUP HOVER
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item:hover,
+.ant-menu-submenu-popup
+  .ant-menu-submenu-title:hover {
+  background:
+    #f0f1ff !important;
+
+  color: #4f5ac4 !important;
+}
+
+
+/* =========================================================
+   POPUP HOVER TEXT
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item:hover
+  .ant-menu-title-content,
+.ant-menu-submenu-popup
+  .ant-menu-submenu-title:hover
+  .ant-menu-title-content {
+  color: #4f5ac4 !important;
+}
+
+
+/* =========================================================
+   POPUP SELECTED ITEM
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item-selected {
+  background:
+    #4f5ac4 !important;
+
+  color: #ffffff !important;
+
+  font-weight: 600 !important;
+}
+
+
+/* =========================================================
+   POPUP SELECTED TEXT
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item-selected
+  .ant-menu-title-content {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   POPUP SELECTED ITEM HOVER
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item-selected:hover {
+  background:
+    #4651b8 !important;
+
+  color: #ffffff !important;
+}
+
+
+.ant-menu-submenu-popup
+  .ant-menu-item-selected:hover
+  .ant-menu-title-content {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   POPUP ICONS
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item
+  .anticon,
+.ant-menu-submenu-popup
+  .ant-menu-submenu-title
+  .anticon {
+  color: #595959 !important;
+}
+
+
+/* =========================================================
+   POPUP HOVER ICON
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item:hover
+  .anticon,
+.ant-menu-submenu-popup
+  .ant-menu-submenu-title:hover
+  .anticon {
+  color: #4f5ac4 !important;
+}
+
+
+/* =========================================================
+   POPUP SELECTED ICON
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-item-selected
+  .anticon {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   POPUP SUBMENU ARROW
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-submenu-arrow {
+  color: #595959 !important;
+}
+
+
+/* =========================================================
+   POPUP SUBMENU BACKGROUND
+   ========================================================= */
+
+.ant-menu-submenu-popup
+  .ant-menu-sub {
+  background: #ffffff !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .premium-sidebar-menu
+    .ant-menu-item,
+  .premium-sidebar-menu
+    .ant-menu-submenu-title {
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+  }
+
+  .premium-sidebar-scroll::-webkit-scrollbar {
+    width: 5px;
+  }
+}

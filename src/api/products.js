@@ -1,26 +1,34 @@
 // Product API Functions
-import { GRAPHQL_QUERIES, graphqlRequest } from './graphql';
+import { GRAPHQL_QUERIES, graphqlRequest } from "./graphql";
 
 // Get all products
-export const getAllProducts = async (first = 10, after = null, search = null, categoryId = null) => {
+export const getAllProducts = async (
+  first = 10,
+  after = null,
+  search = null,
+  categoryId = null,
+) => {
   try {
     const variables = { first };
     if (after) variables.after = after;
     if (search) variables.search = search;
     if (categoryId) variables.categoryId = Number(categoryId);
 
-    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_ALL_PRODUCTS, variables);
+    const data = await graphqlRequest(
+      GRAPHQL_QUERIES.GET_ALL_PRODUCTS,
+      variables,
+    );
 
     return {
       success: true,
       products: data.products?.products || [],
       nextCursor: data.products?.nextCursor,
-      hasMore: data.products?.hasMore
+      hasMore: data.products?.hasMore,
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to fetch products'
+      message: error.message || "Failed to fetch products",
     };
   }
 };
@@ -28,17 +36,39 @@ export const getAllProducts = async (first = 10, after = null, search = null, ca
 // Create new product
 export const createProduct = async (productData) => {
   try {
-    const { categoryId, name, description, sku, price, discountPrice, bulkOrderPrice, isActive = true, unit, measureValue, isFeatured = false, storefrontQuantity, systemQuantity, storefrontReservedQuantity, systemReservedQuantity, shortDescription, deliveryRuleDays, keywords } = productData;
+    const {
+      categoryId,
+      name,
+      description,
+      sku,
+      price,
+      discountPrice,
+      bulkOrderPrice,
+      isActive = true,
+      unit,
+      measureValue,
+      weight,
+      isFeatured = false,
+      storefrontQuantity,
+      systemQuantity,
+      storefrontReservedQuantity,
+      systemReservedQuantity,
+      shortDescription,
+      deliveryRuleDays,
+      keywords,
+    } = productData;
 
     // Convert categoryId to number if it's a string
-    const numericCategoryId = typeof categoryId === 'string' ? parseInt(categoryId, 10) : categoryId;
+    const numericCategoryId =
+      typeof categoryId === "string" ? parseInt(categoryId, 10) : categoryId;
 
     // Convert price to number
     const numericPrice = parseFloat(price);
 
     // Compute total quantity and reserved quantity from storefront and system values
     const totalQuantity = Number(storefrontQuantity) + Number(systemQuantity);
-    const totalReserved = Number(storefrontReservedQuantity) + Number(systemReservedQuantity);
+    const totalReserved =
+      Number(storefrontReservedQuantity) + Number(systemReservedQuantity);
 
     const variables = {
       categoryId: numericCategoryId,
@@ -49,10 +79,16 @@ export const createProduct = async (productData) => {
       price: numericPrice,
       discountPrice: discountPrice ? parseFloat(discountPrice) : null,
       bulkOrderPrice: bulkOrderPrice ? parseFloat(bulkOrderPrice) : null,
-      deliveryRuleDays: deliveryRuleDays ? Number(deliveryRuleDays) : null,
+      deliveryRuleDays:
+        deliveryRuleDays !== null &&
+        deliveryRuleDays !== undefined &&
+        deliveryRuleDays !== ""
+          ? Number(deliveryRuleDays)
+          : null,
       isActive,
       unit,
       measureValue: measureValue ? String(measureValue) : null,
+      weight: weight ? String(weight) : null,
       isFeatured,
       storefrontQuantity: Number(storefrontQuantity),
       systemQuantity: Number(systemQuantity),
@@ -61,7 +97,10 @@ export const createProduct = async (productData) => {
       keywords: keywords || [],
     };
 
-    const data = await graphqlRequest(GRAPHQL_QUERIES.CREATE_PRODUCT, variables);
+    const data = await graphqlRequest(
+      GRAPHQL_QUERIES.CREATE_PRODUCT,
+      variables,
+    );
 
     if (data && data.createProduct) {
       return {
@@ -73,12 +112,12 @@ export const createProduct = async (productData) => {
 
     return {
       success: false,
-      message: 'Failed to create product'
+      message: "Failed to create product",
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to create product'
+      message: error.message || "Failed to create product",
     };
   }
 };
@@ -96,42 +135,54 @@ export const updateProduct = async (id, productData) => {
       price: Number(productData.price),
       discountPrice:
         productData.discountPrice !== undefined &&
-          productData.discountPrice !== null &&
-          productData.discountPrice !== ""
+        productData.discountPrice !== null &&
+        productData.discountPrice !== ""
           ? Number(productData.discountPrice)
           : null,
-      bulkOrderPrice:                                                         // ← added
+      // ← added
+      bulkOrderPrice:
         productData.bulkOrderPrice !== undefined &&
-          productData.bulkOrderPrice !== null &&
-          productData.bulkOrderPrice !== ''
+        productData.bulkOrderPrice !== null &&
+        productData.bulkOrderPrice !== ""
           ? Number(productData.bulkOrderPrice)
           : null,
-      deliveryRuleDays: productData.deliveryRuleDays ? Number(productData.deliveryRuleDays) : null,
+      deliveryRuleDays:
+        productData.deliveryRuleDays !== null &&
+        productData.deliveryRuleDays !== undefined &&
+        productData.deliveryRuleDays !== ""
+          ? Number(productData.deliveryRuleDays)
+          : null,
       isActive: productData.isActive,
       isFeatured: productData.isFeatured,
       unit: productData.unit,
-      measureValue: productData.measureValue ? parseFloat(productData.measureValue) : null,
-      categoryId: productData.categoryId ? Number(productData.categoryId) : null,
+      measureValue: productData.measureValue
+        ? parseFloat(productData.measureValue)
+        : null,
+      weight: productData.weight ? parseFloat(productData.weight) : null,
+      categoryId: productData.categoryId
+        ? Number(productData.categoryId)
+        : null,
       storefrontQuantity: Number(productData.storefrontQuantity),
       systemQuantity: Number(productData.systemQuantity),
-      storefrontReservedQuantity: Number(productData.storefrontReservedQuantity),
+      storefrontReservedQuantity: Number(
+        productData.storefrontReservedQuantity,
+      ),
       systemReservedQuantity: Number(productData.systemReservedQuantity),
     };
 
     const data = await graphqlRequest(
       GRAPHQL_QUERIES.UPDATE_PRODUCT,
-      variables
+      variables,
     );
 
     return {
       success: true,
-      product: data.updateProduct.product
+      product: data.updateProduct.product,
     };
-
   } catch (error) {
     return {
       success: false,
-      message: error.message
+      message: error.message,
     };
   }
 };
@@ -139,52 +190,51 @@ export const updateProduct = async (id, productData) => {
 // Delete product image
 export const deleteProductImage = async (imageId) => {
   try {
-    const numericImageId = typeof imageId === 'string' ? parseInt(imageId, 10) : imageId;
+    const numericImageId =
+      typeof imageId === "string" ? parseInt(imageId, 10) : imageId;
 
-    const data = await graphqlRequest(GRAPHQL_QUERIES.DELETE_PRODUCT_IMAGE, { imageId: numericImageId });
+    const data = await graphqlRequest(GRAPHQL_QUERIES.DELETE_PRODUCT_IMAGE, {
+      imageId: numericImageId,
+    });
 
     if (data && data.deleteProductImage) {
       return {
         success: data.deleteProductImage.success,
-        message: data.deleteProductImage.success ? 'Image deleted successfully' : 'Failed to delete image'
+        message: data.deleteProductImage.success
+          ? "Image deleted successfully"
+          : "Failed to delete image",
       };
     }
 
     return {
       success: false,
-      message: 'Invalid response structure from server'
+      message: "Invalid response structure from server",
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to delete product image'
+      message: error.message || "Failed to delete product image",
     };
   }
 };
 
 // Get product stock
-export const getProductStock = async (productId) => {
+export const getProductStock = async (productId, inventoryType) => {
   try {
-    const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+    const numericProductId =
+      typeof productId === "string" ? parseInt(productId, 10) : productId;
 
-    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_STOCK, { productId: numericProductId });
+    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_STOCK, {
+      productId: numericProductId,
+      inventoryType,
+    });
 
     if (data && data.stock) {
-      return {
-        success: true,
-        stock: data.stock
-      };
+      return { success: true, stock: data.stock };
     }
-
-    return {
-      success: false,
-      message: 'No stock data available'
-    };
+    return { success: false, message: "No stock data available" };
   } catch (error) {
-    return {
-      success: false,
-      message: error.message || 'Failed to fetch product stock'
-    };
+    return { success: false, message: error.message || "Failed to fetch product stock" };
   }
 };
 
@@ -192,10 +242,12 @@ export const getProductStock = async (productId) => {
 export const deleteProduct = async (id) => {
   try {
     // Convert ID to number if it's a string
-    const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+    const numericId = typeof id === "string" ? parseInt(id, 10) : id;
     //console.log('Deleting product with ID:', id, '(converted to:', numericId, ')');
 
-    const data = await graphqlRequest(GRAPHQL_QUERIES.DELETE_PRODUCT, { id: numericId });
+    const data = await graphqlRequest(GRAPHQL_QUERIES.DELETE_PRODUCT, {
+      id: numericId,
+    });
     //console.log('Delete product response:', data);
 
     // Check if response has data directly (like other mutations)
@@ -204,12 +256,12 @@ export const deleteProduct = async (id) => {
       if (data.deleteProduct.success) {
         return {
           success: true,
-          message: 'Product deleted successfully'
+          message: "Product deleted successfully",
         };
       } else {
         return {
           success: false,
-          message: 'Failed to delete product'
+          message: "Failed to delete product",
         };
       }
     }
@@ -220,12 +272,12 @@ export const deleteProduct = async (id) => {
       if (data.data.deleteProduct.success) {
         return {
           success: true,
-          message: 'Product deleted successfully'
+          message: "Product deleted successfully",
         };
       } else {
         return {
           success: false,
-          message: 'Failed to delete product'
+          message: "Failed to delete product",
         };
       }
     }
@@ -233,13 +285,13 @@ export const deleteProduct = async (id) => {
     //console.error('Invalid delete response structure:', data);
     return {
       success: false,
-      message: 'Invalid response structure from server'
+      message: "Invalid response structure from server",
     };
   } catch (error) {
     //console.error('Delete product error:', error);
     return {
       success: false,
-      message: error.message || 'Failed to delete product'
+      message: error.message || "Failed to delete product",
     };
   }
 };
@@ -247,14 +299,11 @@ export const deleteProduct = async (id) => {
 // Get product categories
 export const getProductCategories = async () => {
   try {
-    const data = await graphqlRequest(
-      GRAPHQL_QUERIES.GET_CATEGORIES,
-      {
-        first: 100,
-        after: null,
-        query: null,
-      }
-    );
+    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_CATEGORIES, {
+      first: 100,
+      after: null,
+      query: null,
+    });
 
     if (data && data.allCategories) {
       return {
@@ -266,15 +315,15 @@ export const getProductCategories = async () => {
     return {
       success: false,
       categories: [],
-      message: 'No categories found',
+      message: "No categories found",
     };
   } catch (error) {
-    console.error('Categories API Error:', error);
+    // console.error('Categories API Error:', error);
 
     return {
       success: false,
       categories: [],
-      message: error.message || 'Failed to fetch categories',
+      message: error.message || "Failed to fetch categories",
     };
   }
 };
@@ -283,7 +332,8 @@ export const getProductCategories = async () => {
 export const addProductImage = async (productId, imageFile, sortOrder = 1) => {
   try {
     // Convert productId to number if it's a string
-    const numericProductId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+    const numericProductId =
+      typeof productId === "string" ? parseInt(productId, 10) : productId;
 
     // Convert file to base64
     const base64Image = await fileToBase64(imageFile);
@@ -291,7 +341,7 @@ export const addProductImage = async (productId, imageFile, sortOrder = 1) => {
     const data = await graphqlRequest(GRAPHQL_QUERIES.ADD_PRODUCT_IMAGE, {
       productId: numericProductId,
       image: base64Image,
-      sortOrder
+      sortOrder,
     });
 
     if (data && data.addProductImage) {
@@ -304,12 +354,12 @@ export const addProductImage = async (productId, imageFile, sortOrder = 1) => {
 
     return {
       success: false,
-      message: 'Failed to add image'
+      message: "Failed to add image",
     };
   } catch (error) {
     return {
       success: false,
-      message: error.message || 'Failed to add image'
+      message: error.message || "Failed to add image",
     };
   }
 };
@@ -322,18 +372,20 @@ export const getProductById = async (id) => {
     let nextCursor = null;
 
     while (hasMore) {
-      const data = await graphqlRequest(
-        GRAPHQL_QUERIES.GET_ALL_PRODUCTS,
-        { first: 100, after: nextCursor }
-      );
+      const data = await graphqlRequest(GRAPHQL_QUERIES.GET_ALL_PRODUCTS, {
+        first: 100,
+        after: nextCursor,
+      });
 
       const productsList = data?.products?.products || [];
-      const product = productsList.find(p => parseInt(p.id, 10) === numericId);
+      const product = productsList.find(
+        (p) => parseInt(p.id, 10) === numericId,
+      );
 
       if (product) {
         return {
           success: true,
-          product: product
+          product: product,
         };
       }
 
@@ -343,23 +395,17 @@ export const getProductById = async (id) => {
 
     return {
       success: false,
-      message: "Product not found"
+      message: "Product not found",
     };
-
   } catch (error) {
     return {
       success: false,
-      message: error.message || "Failed to fetch product"
+      message: error.message || "Failed to fetch product",
     };
   }
 };
 
-
-export const updateStock = async (
-  productId,
-  inventoryType,
-  quantity
-) => {
+export const updateStock = async (productId, inventoryType, quantity) => {
   try {
     const variables = {
       productId: Number(productId),
@@ -367,10 +413,7 @@ export const updateStock = async (
       quantity: Number(quantity),
     };
 
-    const data = await graphqlRequest(
-      GRAPHQL_QUERIES.UPDATE_STOCK,
-      variables
-    );
+    const data = await graphqlRequest(GRAPHQL_QUERIES.UPDATE_STOCK, variables);
 
     if (data?.updateStock) {
       return {
@@ -381,7 +424,7 @@ export const updateStock = async (
 
     return {
       success: false,
-      message: 'Stock update failed',
+      message: "Stock update failed",
     };
   } catch (error) {
     return {
@@ -391,58 +434,48 @@ export const updateStock = async (
   }
 };
 
-
 export const getAllStocks = async (
   query = null,
   first = 10,
-  after = null
+  after = null,
+  inventoryType = null,
+  stockStatus = null,
 ) => {
-
   try {
-
     const variables = {
       query,
       first,
-      after
+      after,
+      inventoryType,
+      stockStatus,
     };
 
     const data = await graphqlRequest(
       GRAPHQL_QUERIES.GET_ALL_STOCKS,
-      variables
+      variables,
     );
 
     return {
       success: true,
 
-      allStocks:
-        data?.allStocks?.stocks || [],
+      allStocks: data?.allStocks?.stocks || [],
 
-      totalProducts:
-        data?.allStocks?.totalProducts ?? 0,
+      totalProducts: data?.allStocks?.totalProducts ?? 0,
 
-      lowStock:
-        data?.allStocks?.lowStock ?? 0,
+      lowStock: data?.allStocks?.lowStock ?? 0,
 
-      criticalStock:
-        data?.allStocks?.criticalStock ?? 0,
+      criticalStock: data?.allStocks?.criticalStock ?? 0,
 
-      outOfStock:
-        data?.allStocks?.outOfStock ?? 0,
+      outOfStock: data?.allStocks?.outOfStock ?? 0,
 
-      nextCursor:
-        data?.allStocks?.nextCursor || null,
+      nextCursor: data?.allStocks?.nextCursor || null,
 
-      hasMore:
-        data?.allStocks?.hasMore || false,
+      hasMore: data?.allStocks?.hasMore || false,
     };
-
   } catch (error) {
-
     return {
       success: false,
-      message:
-        error.message ||
-        'Failed to fetch stocks'
+      message: error.message || "Failed to fetch stocks",
     };
   }
 };
@@ -459,7 +492,10 @@ export const getDashboard = async () => {
       recentOrders: data.recentOrders || [],
     };
   } catch (error) {
-    return { success: false, message: error.message || 'Failed to fetch dashboard data' };
+    return {
+      success: false,
+      message: error.message || "Failed to fetch dashboard data",
+    };
   }
 };
 
@@ -468,6 +504,6 @@ const fileToBase64 = (file) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 };

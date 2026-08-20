@@ -1,16 +1,19 @@
 import { Button, Card, Input, message, Select, Typography } from 'antd';
 import { useState } from 'react';
 import { useEmployees } from '../hooks/useEmployees';
+import usePermissions from '../hooks/usePermissions';
 import AddEmployeeModal from './employees/AddEmployeeModal';
 import EmployeeTable from './employees/EmployeeTable';
-
-
 
 const { Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
 const Employees = () => {
+  const { isAdmin } = usePermissions();
+  const { canUpdate } = usePermissions();
+  const canManageEmployees = canUpdate('employee');
+
   const {
     filteredEmployees,
     loading,
@@ -35,6 +38,7 @@ const Employees = () => {
   const [addLoading, setAddLoading] = useState(false);
 
   const handleAddSubmit = async (values) => {
+    if (!canManageEmployees) return;
     setAddLoading(true);
     try {
       await createEmployee(values);
@@ -47,6 +51,7 @@ const Employees = () => {
   };
 
   const handleDelete = async (record) => {
+    if (!canManageEmployees) return;
     try {
       await deleteEmployee(record);
     } catch (error) {
@@ -55,6 +60,7 @@ const Employees = () => {
   };
 
   const handleToggleStatus = async (record) => {
+    if (!canManageEmployees) return;
     try {
       await toggleEmployeeStatus(record);
     } catch (error) {
@@ -62,8 +68,8 @@ const Employees = () => {
     }
   };
 
-
   const handleUpdate = async (values) => {
+    if (!canManageEmployees) return;
     try {
       await updateEmployee(values);
     } catch (error) {
@@ -81,7 +87,6 @@ const Employees = () => {
         overflow: 'hidden',
       }}
     >
-      {/* PAGE HEADER */}
       <div
         style={{
           display: 'flex',
@@ -95,11 +100,7 @@ const Employees = () => {
         <Title level={4} style={{ margin: 0 }}>
           Employee Management
         </Title>
-
       </div>
-
-
-      {/* FILTERS */}
 
       <div
         style={{
@@ -111,7 +112,6 @@ const Employees = () => {
           flexWrap: 'wrap',
         }}
       >
-
         <div
           style={{
             display: 'flex',
@@ -156,16 +156,18 @@ const Employees = () => {
             <Option value="inactive">Inactive</Option>
           </Select>
         </div>
-        <Button
-          type="primary"
-          size="small"
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          Add Employee
-        </Button>
+
+        {canManageEmployees  && (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Add Employee
+          </Button>
+        )}
       </div>
 
-      {/* TABLE */}
       <Card
         style={{
           flex: 1,
@@ -183,7 +185,6 @@ const Employees = () => {
           padding: 0,
         }}
       >
-
         <div
           style={{
             flex: 1,
@@ -202,21 +203,21 @@ const Employees = () => {
             onToggleStatus={handleToggleStatus}
             onDelete={handleDelete}
             onUpdate={handleUpdate}
-            onLoadMore={(cursor) =>
-              loadEmployees(cursor, true)
-            }
+            onLoadMore={(cursor) => loadEmployees(cursor, true)}
+            canManageEmployees={canManageEmployees}
           />
         </div>
       </Card>
 
-      {/* ADD MODAL */}
-      <AddEmployeeModal
-        open={isAddModalOpen}
-        loading={addLoading}
-        onCancel={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddSubmit}
-      />
-    </div >
+      {isAdmin && (
+        <AddEmployeeModal
+          open={isAddModalOpen}
+          loading={addLoading}
+          onCancel={() => setIsAddModalOpen(false)}
+          onSubmit={handleAddSubmit}
+        />
+      )}
+    </div>
   );
 };
 

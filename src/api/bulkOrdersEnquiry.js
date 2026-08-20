@@ -1,10 +1,12 @@
-import { graphqlRequest } from './graphql';
+import { graphqlRequest } from "./graphql";
 
 // ───────────────── BULK ORDER ENQUIRIES ─────────────────
 
-export const getAllBulkOrderEnquiries = async (query = null,
+export const getAllBulkOrderEnquiries = async (
+  query = null,
   first = 10,
-  after = null) => {
+  after = null,
+) => {
   try {
     const data = await graphqlRequest(
       `
@@ -23,12 +25,14 @@ export const getAllBulkOrderEnquiries = async (query = null,
       status
       bulkOrderDetails
       createdAt
-
+      adminMessage
       placedByUser {
         firstName
         lastName
+        phone
+        email
       }
-
+        address
       items {
         id
         quantity
@@ -52,7 +56,7 @@ export const getAllBulkOrderEnquiries = async (query = null,
   }
 }
     `,
-      { query, first, after }
+      { query, first, after },
     );
 
     return {
@@ -70,7 +74,12 @@ export const getAllBulkOrderEnquiries = async (query = null,
   }
 };
 
-export const updateBulkOrderEnquiry = async (bulkOrderId, status, bulkOrderDetails = '') => {
+export const updateBulkOrderEnquiry = async (
+  bulkOrderId,
+  status,
+  bulkOrderDetails = "",
+  adminMessage = "",
+) => {
   try {
     const data = await graphqlRequest(
       `
@@ -78,16 +87,19 @@ export const updateBulkOrderEnquiry = async (bulkOrderId, status, bulkOrderDetai
         $bulkOrderId: Int!
         $status: String!
         $bulkOrderDetails: String
+        $adminMessage: String
       ) {
         updateBulkOrderEnquiry(
           bulkOrderId: $bulkOrderId
           status: $status
           bulkOrderDetails: $bulkOrderDetails
+          adminMessage: $adminMessage
         ) {
           bulkOrder {
             id
             status
             bulkOrderDetails
+            adminMessage
             items {
               id
               quantity
@@ -99,12 +111,13 @@ export const updateBulkOrderEnquiry = async (bulkOrderId, status, bulkOrderDetai
           }
         }
       }
-    `,
+      `,
       {
         bulkOrderId: parseInt(bulkOrderId, 10),
         status,
         bulkOrderDetails,
-      }
+        adminMessage,
+      },
     );
 
     return {

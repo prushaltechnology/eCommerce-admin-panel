@@ -5,12 +5,12 @@ const ImagePreviewModal = ({ visible, imageSrc, onClose }) => {
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = () => {
-    console.log('Image failed to load in modal');
+    //console.log('Image failed to load in modal');
     setImageError(true);
   };
 
   const handleImageLoad = () => {
-    console.log('Image loaded successfully in modal');
+    //console.log('Image loaded successfully in modal');
     setImageError(false);
   };
 
@@ -20,7 +20,7 @@ const ImagePreviewModal = ({ visible, imageSrc, onClose }) => {
       open={visible}
       onCancel={onClose}
       footer={[
-        <Button key="close" onClick={onClose}>
+        <Button size="small" key="close" onClick={onClose}>
           Close
         </Button>
       ]}

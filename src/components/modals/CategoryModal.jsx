@@ -72,10 +72,13 @@ export default function CategoryModal({
             destroyOnHidden
             width={500}
         >
+
             <Form
                 form={form}
                 layout="vertical"
-                onFinish={onSubmit}
+                onFinish={(values) => {
+                    onSubmit(values);
+                }}
             >
                 {/* CATEGORY TYPE */}
                 {!editingCategory && (

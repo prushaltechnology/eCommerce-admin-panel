@@ -13,7 +13,7 @@ npm run dev
 ```
 
 ### 3. Open Browser
-Navigate to `http://localhost:5173` (or whatever URL shown in terminal)
+Navigate to `https://localhost:5173` (or whatever URL shown in terminal)
 
 ## 📋 Testing Steps
 
