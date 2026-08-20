@@ -36,6 +36,22 @@ const formatDate = (date) => {
 const normalizeStatus = (status) =>
     (status || "").toString().trim().toUpperCase();
 
+// Shared validation: refund amount must be a number, >= 0, and <= order amount
+const validateRefundAmount = (value, orderAmount) => {
+    const max = parseFloat(orderAmount || 0);
+
+    if (value === null || value === undefined || Number.isNaN(value)) {
+        return "Refund amount is required";
+    }
+    if (value < 0) {
+        return "Refund amount cannot be negative";
+    }
+    if (value > max) {
+        return `Refund amount cannot exceed the order amount (${formatAmount(max)})`;
+    }
+    return "";
+};
+
 function RefundStatusTag({ status }) {
     const configs = {
         PENDING: { color: "orange", icon: <ClockCircleOutlined /> },
@@ -120,12 +136,14 @@ function QuickActionModal({
     const [refundAmount, setRefundAmount] = useState(0);
     const [rejectionReason, setRejectionReason] = useState("");
     const [adminNote, setAdminNote] = useState("");
+    const [amountError, setAmountError] = useState("");
 
     useEffect(() => {
         if (open && record) {
             setRefundAmount(parseFloat(record.finalAmount || 0));
             setRejectionReason("");
             setAdminNote("");
+            setAmountError("");
         }
     }, [open, record]);
 
@@ -133,8 +151,18 @@ function QuickActionModal({
 
     const isApprove = mode === "approve";
 
+    const handleAmountChange = (val) => {
+        setRefundAmount(val ?? 0);
+        setAmountError(validateRefundAmount(val, record.finalAmount));
+    };
+
     const handleOk = () => {
         if (isApprove) {
+            const error = validateRefundAmount(refundAmount, record.finalAmount);
+            if (error) {
+                setAmountError(error);
+                return;
+            }
             onConfirm(record, refundAmount, adminNote);
         } else {
             if (!rejectionReason.trim()) return;
@@ -152,6 +180,7 @@ function QuickActionModal({
             okText={isApprove ? "Approve" : "Reject"}
             okButtonProps={{
                 danger: !isApprove,
+                disabled: isApprove && !!amountError,
                 style: isApprove
                     ? { background: "#52c41a", borderColor: "#52c41a" }
                     : undefined,
@@ -172,10 +201,19 @@ function QuickActionModal({
                         min={0}
                         max={parseFloat(record.finalAmount || 0)}
                         value={refundAmount}
-                        onChange={(val) => setRefundAmount(val ?? 0)}
+                        onChange={handleAmountChange}
+                        status={amountError ? "error" : undefined}
                         style={{ width: "100%", marginTop: 4 }}
                         prefix="₹"
                     />
+                    {amountError && (
+                        <Text
+                            type="danger"
+                            style={{ fontSize: 12, display: "block", marginTop: 4 }}
+                        >
+                            {amountError}
+                        </Text>
+                    )}
                 </div>
             ) : (
                 <div style={{ marginBottom: 12 }}>

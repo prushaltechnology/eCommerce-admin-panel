@@ -56,6 +56,22 @@ const getRefundStatusConfig = (status) => {
     };
 };
 
+// Shared validation: refund amount must be a number, >= 0, and <= order amount
+const validateRefundAmount = (value, orderAmount) => {
+    const max = parseFloat(orderAmount || 0);
+
+    if (value === null || value === undefined || Number.isNaN(value)) {
+        return "Refund amount is required";
+    }
+    if (value < 0) {
+        return "Refund amount cannot be negative";
+    }
+    if (value > max) {
+        return `Refund amount cannot exceed the order amount (${formatAmount(max)})`;
+    }
+    return "";
+};
+
 function RefundStatusTag({ status }) {
     const config = getRefundStatusConfig(status);
 
@@ -130,6 +146,7 @@ export default function RefundDetailModal({
     const [rejectionReason, setRejectionReason] = useState("");
     const [showRejectInput, setShowRejectInput] = useState(false);
     const [adminNote, setAdminNote] = useState("");
+    const [amountError, setAmountError] = useState("");
 
     // Reset local state whenever a new refund is opened
     useEffect(() => {
@@ -137,6 +154,7 @@ export default function RefundDetailModal({
             setRefundAmount(parseFloat(refund.finalAmount || 0));
             setRejectionReason("");
             setAdminNote("");
+            setAmountError("");
             setShowRejectInput(initialAction === "reject");
         }
     }, [open, refund, initialAction]);
@@ -146,7 +164,17 @@ export default function RefundDetailModal({
     const isPending = refund.refundStatus?.toUpperCase() === "PENDING";
     const canTakeAction = isPending && canManageRefunds;
 
+    const handleAmountChange = (val) => {
+        setRefundAmount(val ?? 0);
+        setAmountError(validateRefundAmount(val, refund.finalAmount));
+    };
+
     const handleApproveClick = () => {
+        const error = validateRefundAmount(refundAmount, refund.finalAmount);
+        if (error) {
+            setAmountError(error);
+            return;
+        }
         onApprove?.(refundAmount, adminNote);
     };
 
@@ -185,7 +213,7 @@ export default function RefundDetailModal({
                             type="primary"
                             style={{ background: "#52c41a", borderColor: "#52c41a" }}
                             loading={approving}
-                            disabled={rejecting}
+                            disabled={rejecting || !!amountError}
                             onClick={handleApproveClick}
                         >
                             Approve
@@ -442,9 +470,8 @@ export default function RefundDetailModal({
                                     min={0}
                                     max={parseFloat(refund.finalAmount || 0)}
                                     value={refundAmount}
-                                    onChange={(val) =>
-                                        setRefundAmount(val ?? 0)
-                                    }
+                                    onChange={handleAmountChange}
+                                    status={amountError ? "error" : undefined}
                                     style={{
                                         width: "100%",
                                         marginTop: 4,
@@ -453,6 +480,18 @@ export default function RefundDetailModal({
                                     precision={2}
                                     step={0.01}
                                 />
+                                {amountError && (
+                                    <Text
+                                        type="danger"
+                                        style={{
+                                            fontSize: 12,
+                                            display: "block",
+                                            marginTop: 4,
+                                        }}
+                                    >
+                                        {amountError}
+                                    </Text>
+                                )}
                             </Col>
 
                             <Col xs={24}>
