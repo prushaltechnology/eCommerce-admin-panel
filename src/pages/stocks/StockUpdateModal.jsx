@@ -42,9 +42,17 @@ const StockUpdateModal = ({
     >
         <Form form={form} layout="vertical" onFinish={onFinish}>
 
-            {/* Product selector — only shown when no item is pre-selected */}
+            {/* Product selector — only shown when no item is pre-selected.
+                Registered with name="productId" + a required rule so antd
+                actually blocks submission until a product is chosen,
+                instead of silently letting onFinish fire with a null
+                selectedItem. */}
             {!selectedItem && (
-                <Form.Item label="Select Product" required>
+                <Form.Item
+                    name="productId"
+                    label="Select Product"
+                    rules={[{ required: true, message: 'Please select a product' }]}
+                >
                     <Select
                         showSearch
                         allowClear

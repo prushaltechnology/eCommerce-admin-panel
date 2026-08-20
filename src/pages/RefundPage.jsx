@@ -1,6 +1,7 @@
 import { Typography } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import useRefund from "../hooks/useRefund";
+import usePermissions from "../hooks/usePermissions";
 import RefundDetailModal from "./Refunds/RefundDetailModal";
 import RefundFilters from "./Refunds/RefundFilters";
 import RefundStatsBar from "./Refunds/RefundStatsBar";
@@ -9,20 +10,19 @@ import RefundTable from "./Refunds/RefundTable";
 const { Title } = Typography;
 
 export default function RefundPage() {
+    const { canUpdate } = usePermissions();
+    const canManageRefunds = canUpdate("refund"); 
+
     const {
         refunds,
         loading,
         fetchingMore,
-
         approvingRefundId,
         rejectingRefundId,
-
         refundStats,
         refundHasMore,
-
         fetchRefunds,
         fetchMoreRefunds,
-
         approveRefund,
         rejectRefund,
     } = useRefund();
@@ -44,18 +44,10 @@ export default function RefundPage() {
         return refunds.filter((refund) => {
             const matchesSearch =
                 !normalizedSearch ||
-                refund.orderNumber
-                    ?.toLowerCase()
-                    .includes(normalizedSearch) ||
-                refund.customerName
-                    ?.toLowerCase()
-                    .includes(normalizedSearch) ||
-                refund.customerPhone
-                    ?.toLowerCase()
-                    .includes(normalizedSearch) ||
-                refund.cancellationReason
-                    ?.toLowerCase()
-                    .includes(normalizedSearch);
+                refund.orderNumber?.toLowerCase().includes(normalizedSearch) ||
+                refund.customerName?.toLowerCase().includes(normalizedSearch) ||
+                refund.customerPhone?.toLowerCase().includes(normalizedSearch) ||
+                refund.cancellationReason?.toLowerCase().includes(normalizedSearch);
 
             const matchesStatus =
                 statusFilter === "ALL" ||
@@ -77,15 +69,11 @@ export default function RefundPage() {
         setIntendedAction(null);
     };
 
-    // UPDATED: accepts adminNote as 2nd/3rd arg
     const handleApproveRefund = async (refundAmount, adminNote) => {
+        if (!canManageRefunds) return;
         if (!selectedRefund?.id) return;
 
-        const res = await approveRefund(
-            selectedRefund.id,
-            refundAmount,
-            adminNote,
-        );
+        const res = await approveRefund(selectedRefund.id, refundAmount, adminNote);
 
         if (res?.success) {
             handleCloseModal();
@@ -95,12 +83,10 @@ export default function RefundPage() {
     };
 
     const handleRejectRefund = async (rejectionReason, adminNote) => {
+        if (!canManageRefunds) return;
         if (!selectedRefund?.id) return;
 
-        const res = await rejectRefund(
-            selectedRefund.id,
-            rejectionReason,
-        );
+        const res = await rejectRefund(selectedRefund.id, rejectionReason);
 
         if (res?.success) {
             handleCloseModal();
@@ -109,43 +95,26 @@ export default function RefundPage() {
         return res;
     };
 
-    // NEW: quick actions fired directly from the table's own modal
     const handleQuickApprove = async (record, refundAmount, adminNote) => {
+        if (!canManageRefunds) return;
         return approveRefund(record.id, refundAmount, adminNote);
     };
 
     const handleQuickReject = async (record, rejectionReason, adminNote) => {
+        if (!canManageRefunds) return;
         return rejectRefund(record.id, rejectionReason);
     };
 
     return (
-        <div
-            style={{
-                padding: 24,
-                background: "#f5f6fa",
-                minHeight: "100vh",
-            }}
-        >
-            {/* Page Header */}
+        <div style={{ padding: 24, background: "#f5f6fa", minHeight: "100vh" }}>
             <div style={{ marginBottom: 20 }}>
-                <Title
-                    level={4}
-                    style={{
-                        margin: 0,
-                        fontWeight: 600,
-                    }}
-                >
+                <Title level={4} style={{ margin: 0, fontWeight: 600 }}>
                     Refund Management
                 </Title>
             </div>
 
-            {/* Stats */}
-            <RefundStatsBar
-                stats={refundStats}
-                loading={loading}
-            />
+            <RefundStatsBar stats={refundStats} loading={loading} />
 
-            {/* Filters */}
             <RefundFilters
                 search={search}
                 statusFilter={statusFilter}
@@ -153,7 +122,6 @@ export default function RefundPage() {
                 onStatusChange={setStatusFilter}
             />
 
-            {/* Refund Table */}
             <RefundTable
                 refunds={filteredRefunds}
                 loading={loading}
@@ -165,9 +133,9 @@ export default function RefundPage() {
                 onQuickReject={handleQuickReject}
                 approvingRefundId={approvingRefundId}
                 rejectingRefundId={rejectingRefundId}
+                canManageRefunds={canManageRefunds}
             />
 
-            {/* Refund Detail Modal */}
             <RefundDetailModal
                 open={modalOpen}
                 refund={selectedRefund}
@@ -177,14 +145,13 @@ export default function RefundPage() {
                 onReject={handleRejectRefund}
                 approving={
                     approvingRefundId !== null &&
-                    String(approvingRefundId) ===
-                    String(selectedRefund?.id)
+                    String(approvingRefundId) === String(selectedRefund?.id)
                 }
                 rejecting={
                     rejectingRefundId !== null &&
-                    String(rejectingRefundId) ===
-                    String(selectedRefund?.id)
+                    String(rejectingRefundId) === String(selectedRefund?.id)
                 }
+                canManageRefunds={canManageRefunds}
             />
         </div>
     );

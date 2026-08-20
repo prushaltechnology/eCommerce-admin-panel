@@ -219,31 +219,22 @@ export const deleteProductImage = async (imageId) => {
 };
 
 // Get product stock
-export const getProductStock = async (productId) => {
+export const getProductStock = async (productId, inventoryType) => {
   try {
     const numericProductId =
       typeof productId === "string" ? parseInt(productId, 10) : productId;
 
     const data = await graphqlRequest(GRAPHQL_QUERIES.GET_STOCK, {
       productId: numericProductId,
+      inventoryType,
     });
 
     if (data && data.stock) {
-      return {
-        success: true,
-        stock: data.stock,
-      };
+      return { success: true, stock: data.stock };
     }
-
-    return {
-      success: false,
-      message: "No stock data available",
-    };
+    return { success: false, message: "No stock data available" };
   } catch (error) {
-    return {
-      success: false,
-      message: error.message || "Failed to fetch product stock",
-    };
+    return { success: false, message: error.message || "Failed to fetch product stock" };
   }
 };
 

@@ -44,6 +44,7 @@ const EmployeeTable = ({
     onDelete,
     onUpdate,
     onLoadMore,
+    canManageEmployees,
 }) => {
     const [editEmployee, setEditEmployee] = useState(null);
     const [permEmployee, setPermEmployee] = useState(null);
@@ -211,7 +212,7 @@ const EmployeeTable = ({
                     </Tag>
                 ),
         },
-        {
+                {
             title: 'Status',
             key: 'status',
             width: 90,
@@ -220,9 +221,8 @@ const EmployeeTable = ({
                     <Switch
                         size="small"
                         checked={record.isActive}
-                        onChange={() =>
-                            onToggleStatus(record)
-                        }
+                        disabled={!canManageEmployees}
+                        onChange={() => onToggleStatus(record)}
                     />
                 ),
         },
@@ -230,55 +230,44 @@ const EmployeeTable = ({
             title: 'Actions',
             key: 'actions',
             width: 120,
-            render: (_, record) =>
-                record.isSkeleton ? (
-                    <Space size="small">
-                        <Skeleton.Button
-                            active
-                            size="small"
-                            shape="circle"
-                        />
-                        <Skeleton.Button
-                            active
-                            size="small"
-                            shape="circle"
-                        />
-                    </Space>
-                ) : (
+            render: (_, record) => {
+                if (record.isSkeleton) {
+                    return (
+                        <Space size="small">
+                            <Skeleton.Button active size="small" shape="circle" />
+                            <Skeleton.Button active size="small" shape="circle" />
+                        </Space>
+                    );
+                }
+
+                if (!canManageEmployees) return null;
+
+                return (
                     <Space size="small">
                         <Button
                             size="small"
                             icon={<EditOutlined />}
-                            onClick={() =>
-                                setEditEmployee(record)
-                            }
+                            onClick={() => setEditEmployee(record)}
                         />
 
                         <Button
                             size="small"
                             icon={<LockOutlined />}
-                            onClick={() =>
-                                setPermEmployee(record)
-                            }
+                            onClick={() => setPermEmployee(record)}
                         />
 
                         <Popconfirm
                             title="Delete Employee"
                             description="Are you sure you want to delete this employee?"
-                            onConfirm={() =>
-                                onDelete(record)
-                            }
+                            onConfirm={() => onDelete(record)}
                             okText="Yes"
                             cancelText="No"
                         >
-                            <Button
-                                size="small"
-                                danger
-                                icon={<DeleteOutlined />}
-                            />
+                            <Button size="small" danger icon={<DeleteOutlined />} />
                         </Popconfirm>
                     </Space>
-                ),
+                );
+            },
         },
     ];
 

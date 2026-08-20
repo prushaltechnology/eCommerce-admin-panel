@@ -29,7 +29,10 @@ const skeletonRows = Array.from({ length: 6 }).map((_, index) => ({
     isSkeleton: true,
 }));
 
-const BulkOrdersEnquiryTable = ({ loading, enquiries, fetchingMore, hasMore, nextCursor, onLoadMore, onViewDetails, onTrackOrder }) => {
+const BulkOrdersEnquiryTable = ({
+    loading, enquiries, fetchingMore, hasMore, nextCursor,
+    onLoadMore, onViewDetails, onTrackOrder, canManageOrders,
+}) => {
     const tableContainerRef = useRef(null);
     useEffect(() => {
         const tableBody =
@@ -261,13 +264,15 @@ const BulkOrdersEnquiryTable = ({ loading, enquiries, fetchingMore, hasMore, nex
                             icon={<EyeOutlined />}
                             onClick={() => onViewDetails(record)}
                         />
-                        <Button
-                            type="default"
-                            size="small"
-                            icon={<TruckOutlined />}
-                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
-                            onClick={() => onTrackOrder(record)}
-                        />
+                        {canManageOrders && (
+                            <Button
+                                type="default"
+                                size="small"
+                                icon={<TruckOutlined />}
+                                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a', color: '#fff' }}
+                                onClick={() => onTrackOrder(record)}
+                            />
+                        )}
                     </Space>
                 );
             },

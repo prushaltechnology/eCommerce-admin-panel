@@ -14,6 +14,7 @@ const CustomerTable = ({
     onToggleStatus,
     onLoadMore,
     onView,
+    canManageCustomers,
 }) => {
     const tableContainerRef = useRef(null);
 
@@ -85,7 +86,7 @@ const CustomerTable = ({
                 ),
         },
 
-        {
+                {
             title: 'Status',
             key: 'status',
             width: 100,
@@ -94,6 +95,7 @@ const CustomerTable = ({
                     <Switch
                         size="small"
                         checked={record.isActive}
+                        disabled={!canManageCustomers}
                         onChange={() => onToggleStatus(record)}
                     />
                 ),
@@ -111,36 +113,39 @@ const CustomerTable = ({
                     </Space>
                 ) : (
                     <Space size="small">
-
                         <Button
                             size="small"
                             icon={<EyeOutlined />}
                             onClick={() => onView(record)}
                         />
 
-                        <Button
-                            size="small"
-                            icon={<EditOutlined />}
-                            onClick={() => onEdit(record)}
-                        />
+                        {canManageCustomers && (
+                            <>
+                                <Button
+                                    size="small"
+                                    icon={<EditOutlined />}
+                                    onClick={() => onEdit(record)}
+                                />
 
-                        <Popconfirm
-                            title="Delete Customer"
-                            description="Are you sure you want to delete this customer?"
-                            onConfirm={() => onDelete(record.id)}
-                            okText="Yes"
-                            cancelText="No"
-                        >
-                            <Button
-                                size="small"
-                                danger
-                                icon={<DeleteOutlined />}
-                            />
-                        </Popconfirm>
-
+                                <Popconfirm
+                                    title="Delete Customer"
+                                    description="Are you sure you want to delete this customer?"
+                                    onConfirm={() => onDelete(record.id)}
+                                    okText="Yes"
+                                    cancelText="No"
+                                >
+                                    <Button
+                                        size="small"
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                    />
+                                </Popconfirm>
+                            </>
+                        )}
                     </Space>
                 ),
-        }
+        },
+        
     ];
 
     const datasource = loading ? skeletonRows : customers;

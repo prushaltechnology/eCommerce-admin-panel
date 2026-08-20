@@ -95,9 +95,13 @@ const EmployeePermissionsModal = ({ open, onCancel, employee }) => {
                     rowClassName={(row) =>
                         row.subModule ? 'permission-row-submodule' : ''
                     }
-                    // Visual section break before the first order row
-                    onRow={(row, index) => {
-                        const isFirstOrderRow = row.rowKey === 'order__system';
+                    // Visual section break before the first order row.
+                    // rowKey for order rows is built as `order__${subModule}`,
+                    // and the first ORDER_SUBMODULES entry has
+                    // subModule: "order_dashboard" — so the real first key
+                    // is "order__order_dashboard", not "order__system".
+                    onRow={(row) => {
+                        const isFirstOrderRow = row.rowKey === 'order__order_dashboard';
                         return {
                             style: isFirstOrderRow
                                 ? { borderTop: '2px solid #f0f0f0' }

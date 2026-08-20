@@ -9,12 +9,20 @@ import StockStats from './stocks/StockStats';
 import StockTable from './stocks/StockTable';
 import StockUpdateModal from './stocks/StockUpdateModal';
 import useStockManager from '../hooks/useStockManager';
+import { getProductStock } from '../api/products';
+
+const VALID_FILTERS = ['low', 'critical', 'out'];
 
 const Stock = () => {
   const { canUpdate } = usePermissions();
   const canManageStock = canUpdate('stock');
   const canCreateProduct = canUpdate('product');
-  const [searchParams] = useSearchParams();
+
+  // Both directions now go through this: URL -> filter (notification links,
+  // reload, back/forward) AND filter -> URL (dropdown selection), so the
+  // two can never drift apart the way they could when only navigate()
+  // from the sidebar wrote to the URL.
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     categories,
@@ -50,13 +58,39 @@ const Stock = () => {
     getSystemAvailable,
   } = useStockManager();
 
+  // URL -> filter state (covers: notification click, manual URL edit,
+  // browser back/forward, and page reload while ?filter= is present)
   useEffect(() => {
     const filterParam = searchParams.get('filter');
-    if (filterParam && ['low', 'critical', 'out'].includes(filterParam)) {
+    if (filterParam && VALID_FILTERS.includes(filterParam)) {
       setStockFilter(filterParam);
+    } else {
+      setStockFilter('all');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // filter state -> URL (covers: dropdown selection). "all" clears the
+  // param instead of writing ?filter=all, so the two representations of
+  // "no filter" (missing param vs literal "all") don't fall out of sync.
+  const handleStockFilterChange = useCallback(
+    (value) => {
+      setStockFilter(value);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value && VALID_FILTERS.includes(value)) {
+            next.set('filter', value);
+          } else {
+            next.delete('filter');
+          }
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setStockFilter, setSearchParams]
+  );
 
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedStockItem, setSelectedStockItem] = useState(null);
@@ -85,20 +119,50 @@ const Stock = () => {
     setIsStockModalOpen(true);
   };
 
-  const handleProductSelect = (value) => {
+  // Single source of truth for product selection in the "Manage Stock" flow.
+  // Prefers the authoritative stock-table data (filteredStocks) over
+  // productList, since productList's stock fields are not reliably kept
+  // in sync. Falls back to a direct getProductStock() fetch if the product
+  // hasn't been loaded into filteredStocks yet (e.g. it's on a later page).
+  const handleProductSelect = async (value) => {
     const product = productList.find((p) => p.id === value);
     if (!product) return;
+
+    const existing = filteredStocks.find((s) => s.id === product.id);
+
+    let storefrontStock = existing?.storefrontStock;
+    let systemStock = existing?.systemStock;
+
+    if (storefrontStock === undefined || systemStock === undefined) {
+      const [storefrontRes, systemRes] = await Promise.all([
+        getProductStock(product.id, 'storefront'),
+        getProductStock(product.id, 'system'),
+      ]);
+
+      storefrontStock = storefrontRes.success ? Number(storefrontRes.stock?.quantity || 0) : 0;
+      systemStock = systemRes.success ? Number(systemRes.stock?.quantity || 0) : 0;
+
+      if (!storefrontRes.success && !systemRes.success) {
+        message.error('Could not load current stock for this product');
+      }
+    }
+
     setSelectedStockItem({
       id: product.id,
       name: product.name,
-      storefrontStock: Number(product.storefrontStock || 0),
-      systemStock: Number(product.systemStock || 0),
+      storefrontStock: Number(storefrontStock || 0),
+      systemStock: Number(systemStock || 0),
     });
     stockForm.setFieldsValue({ updateType: 'add', quantity: 1 });
   };
 
   const handleStockFormFinish = async (values) => {
     if (!canManageStock) return;
+
+    if (!selectedStockItem) {
+      message.error('Please select a product first');
+      return;
+    }
 
     try {
       const currentQty =
@@ -116,6 +180,7 @@ const Stock = () => {
       if (res) {
         await loadStocks(searchText, null, true);
         setIsStockModalOpen(false);
+        setSelectedStockItem(null); // reset so next open starts clean
         stockForm.resetFields();
       }
     } catch (err) {
@@ -207,7 +272,7 @@ const Stock = () => {
         searchText={searchText}
         stockFilter={stockFilter}
         onSearchChange={setSearchText}
-        onFilterChange={setStockFilter}
+        onFilterChange={handleStockFilterChange}
         onEditStock={handleEditStock}
         canManageStock={canManageStock}
         onLoadMore={handleLoadMore}
@@ -216,13 +281,15 @@ const Stock = () => {
         getStockPercentage={getStockPercentage}
         getStorefrontAvailable={getStorefrontAvailable}
         getSystemAvailable={getSystemAvailable}
-
       />
 
       {canManageStock && (
         <StockUpdateModal
           open={isStockModalOpen}
-          onCancel={() => setIsStockModalOpen(false)}
+          onCancel={() => {
+            setIsStockModalOpen(false);
+            setSelectedStockItem(null);
+          }}
           onFinish={handleStockFormFinish}
           form={stockForm}
           actionLoading={actionLoading}

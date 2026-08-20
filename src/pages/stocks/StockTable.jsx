@@ -283,7 +283,6 @@ const StockTable = ({
                     size="small"
                     value={stockFilter}
                     onChange={onFilterChange}
-                    defaultValue="all"
                     style={{ minWidth: 160 }}
                 >
                     <Option value="all">All Products</Option>

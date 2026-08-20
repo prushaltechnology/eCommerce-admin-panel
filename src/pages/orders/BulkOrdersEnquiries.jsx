@@ -78,30 +78,31 @@ const BulkOrderEnquiries = () => {
     };
 
     const handleViewDetails = (enquiry) => {
-    setSelectedEnquiry(enquiry);
-    setNewStatus(enquiry.status || 'pending');
-    setAdminMessage(enquiry.adminMessage || '');
-    setDetailModalVisible(true);
-};
+        setSelectedEnquiry(enquiry);
+        setNewStatus(enquiry.status || 'pending');
+        setAdminMessage(enquiry.adminMessage || '');
+        setDetailModalVisible(true);
+    };
 
-const handleBulkOrderStatusUpdate = async () => {
-    if (!selectedBulkOrder) return false;
+    const handleBulkOrderStatusUpdate = async () => {
+        if (!canManageOrders) return false;
+        if (!selectedBulkOrder) return false;
 
-    const response = await changeBulkOrderStatus(
-        selectedBulkOrder.id,
-        newStatus,
-        selectedBulkOrder.bulkOrderDetails || '',
-        adminMessage
-    );
+        const response = await changeBulkOrderStatus(
+            selectedBulkOrder.id,
+            newStatus,
+            selectedBulkOrder.bulkOrderDetails || '',
+            adminMessage
+        );
 
-    if (response.success) {
-        await fetchEnquiries(searchText || null);
-        setBulkOrderModalOpen(false);
-        return true;
-    }
+        if (response.success) {
+            await fetchEnquiries(searchText || null);
+            setBulkOrderModalOpen(false);
+            return true;
+        }
 
-    return false;
-};
+        return false;
+    };
     // ── Open detail modal ─────────────────────────────────────────────────────
     const handleTrackOrder = (enquiry) => {
         setSelectedEnquiry(enquiry);
@@ -202,9 +203,8 @@ const handleBulkOrderStatusUpdate = async () => {
                     enquiries={filteredEnquiries}
                     onViewDetails={handleViewDetails}
                     onTrackOrder={handleOpenBulkOrderModal}
-                    onLoadMore={(cursor) =>
-                        fetchEnquiries(searchText, cursor, true)
-                    }
+                    canManageOrders={canManageOrders}
+                    onLoadMore={(cursor) => fetchEnquiries(searchText, cursor, true)}
                 />
             </div>
 
@@ -220,7 +220,6 @@ const handleBulkOrderStatusUpdate = async () => {
                 onStatusUpdate={handleStatusUpdate}
                 updateLoading={updateLoading}
                 canUpdateStatus={canManageOrders}
-
             />
 
             {/* ── Tracking Modal (reused as-is) ──────────────────────────────────── */}

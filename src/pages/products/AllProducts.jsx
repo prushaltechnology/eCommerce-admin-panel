@@ -31,7 +31,8 @@ const { Title, Text } = Typography;
 
 const AllProducts = () => {
   const navigate = useNavigate();
-  const { canUpdate } = usePermissions();
+  const { canView, canUpdate } = usePermissions();
+  const canViewProducts = canView('product');
   const canManageProducts = canUpdate('product');
 
   const {
@@ -612,9 +613,14 @@ const AllProducts = () => {
           );
         }
 
-        if (canManageProducts) {
-          return (
-            <Space size="small">
+        // Nothing to show if the user can neither view nor manage products
+        if (!canViewProducts && !canManageProducts) {
+          return null;
+        }
+
+        return (
+          <Space size="small">
+            {(canViewProducts || canManageProducts) && (
               <Button
                 size="small"
                 icon={<EyeOutlined />}
@@ -624,29 +630,31 @@ const AllProducts = () => {
                   })
                 }
               />
+            )}
 
-              <Button
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => handleEdit(record)}
-              />
-
-              <Popconfirm
-                title="Delete Product"
-                description="Are you sure you want to delete this product?"
-                onConfirm={() => handleDelete(record.id)}
-              >
+            {canManageProducts && (
+              <>
                 <Button
                   size="small"
-                  danger
-                  icon={<DeleteOutlined />}
+                  icon={<EditOutlined />}
+                  onClick={() => handleEdit(record)}
                 />
-              </Popconfirm>
-            </Space>
-          );
-        }
 
-        return null;
+                <Popconfirm
+                  title="Delete Product"
+                  description="Are you sure you want to delete this product?"
+                  onConfirm={() => handleDelete(record.id)}
+                >
+                  <Button
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                  />
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        );
       },
     },
   ];

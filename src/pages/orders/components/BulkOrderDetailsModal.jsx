@@ -25,6 +25,7 @@ const BulkOrderDetailsModal = ({
     setAdminMessage,
     onStatusUpdate,
     updateLoading = false,
+    canUpdateStatus = false,
 }) => {
     const renderItemImage = (item) => {
         const imageSrc = getProductImage(item.product);
@@ -71,7 +72,7 @@ const BulkOrderDetailsModal = ({
                                     <strong>Contact:</strong>{' '}
                                     {enquiry.placedByUser?.phone || 'N/A'}
                                 </p>
-                                 <p>
+                                <p>
                                     <strong>email:</strong>{' '}
                                     {enquiry.placedByUser?.email}
                                 </p>
@@ -83,7 +84,7 @@ const BulkOrderDetailsModal = ({
                                     {enquiry.bulkOrderDetails || 'N/A'}
                                 </p>
                                 <p><strong>Address:</strong></p>
-                                 <p style={{ color: '#666', fontSize: 13 }}>
+                                <p style={{ color: '#666', fontSize: 13 }}>
                                     {enquiry.address || 'N/A'}
                                 </p>
                             </Col>
@@ -96,40 +97,53 @@ const BulkOrderDetailsModal = ({
                             <Col span={12}>
                                 <p><strong>Enquiry ID:</strong> #{enquiry.id}</p>
                                 <p><strong>Date:</strong> {enquiry.createdAt ? dayjs(enquiry.createdAt).format('MMMM D, YYYY h:mm A') : '—'}</p>
-                                
+
                             </Col>
                             <Col span={12}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                     <strong>Status:</strong>
-                                    <Select
-                                        value={newStatus}
-                                        onChange={setNewStatus}
-                                        style={{ width: 170 }}
-                                        size="small"
-                                    >
-                                        <Option value="pending">Pending</Option>
-                                        <Option value="confirmed">Confirmed</Option>
-                                        <Option value="cancelled">Cancelled</Option>
-                                    </Select>
+                                    {canUpdateStatus ? (
+                                        <Select
+                                            value={newStatus}
+                                            onChange={setNewStatus}
+                                            style={{ width: 170 }}
+                                            size="small"
+                                        >
+                                            <Option value="pending">Pending</Option>
+                                            <Option value="confirmed">Confirmed</Option>
+                                            <Option value="cancelled">Cancelled</Option>
+                                        </Select>
+                                    ) : (
+                                        <span style={{ textTransform: 'capitalize' }}>{newStatus}</span>
+                                    )}
                                 </div>
-                                <div style={{ marginTop: 8 }}>
-                                    <Input.TextArea
-                                        size="small"
-                                        placeholder="Admin message"
-                                        value={adminMessage}
-                                        onChange={(e) => setAdminMessage(e.target.value)}
-                                        rows={3}
-                                    />
-                                    <Button
-                                        type="primary"
-                                        size="small"
-                                        style={{ marginTop: 8 }}
-                                        onClick={onStatusUpdate}
-                                        loading={updateLoading}
-                                    >
-                                        Update Status
-                                    </Button>
-                                </div>
+
+                                {canUpdateStatus && (
+                                    <div style={{ marginTop: 8 }}>
+                                        <Input.TextArea
+                                            size="small"
+                                            placeholder="Admin message"
+                                            value={adminMessage}
+                                            onChange={(e) => setAdminMessage(e.target.value)}
+                                            rows={3}
+                                        />
+                                        <Button
+                                            type="primary"
+                                            size="small"
+                                            style={{ marginTop: 8 }}
+                                            onClick={onStatusUpdate}
+                                            loading={updateLoading}
+                                        >
+                                            Update Status
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {!canUpdateStatus && adminMessage && (
+                                    <p style={{ marginTop: 8, color: '#666', fontSize: 13 }}>
+                                        <strong>Admin message:</strong> {adminMessage}
+                                    </p>
+                                )}
                             </Col>
                         </Row>
                     </Card>

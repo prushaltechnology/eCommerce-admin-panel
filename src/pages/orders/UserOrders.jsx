@@ -5,10 +5,12 @@ import useOrders from '../../hooks/useOrders';
 import SystemOrdersFilters from './components/SystemOrdersFilters';
 import SystemOrdersStats from './components/SystemOrdersStats';
 import SystemOrdersTable from './components/SystemOrdersTable';
-
+import usePermissions from '../../hooks/usePermissions';
 const { Title } = Typography;
 
 const UserOrders = () => {
+  const { canUpdate } = usePermissions();
+  const canManageOrders = canUpdate('order', 'system_order');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -157,8 +159,9 @@ const UserOrders = () => {
           onViewDetails={handleViewDetails}
           onCancelOrder={handleCancelOrder}
           cancellingOrderId={cancellingOrderId}
-          canManageOrders={true}
           onLoadMore={handleLoadMore}
+          canManageOrders={canManageOrders}
+
         />
       </div>
 

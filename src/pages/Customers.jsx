@@ -3,6 +3,7 @@ import { Button, Card, Input, message, Typography } from 'antd';
 import { useState } from 'react';
 import AddCustomerModal from '../components/modals/AddCustomerModal';
 import { useCustomers } from '../hooks/useCustomers';
+import usePermissions from '../hooks/usePermissions';
 import CustomerDetailsModal from './customers/CustomerDetailsModal';
 import CustomerTable from './customers/CustomerTable';
 import EditCustomerModal from './customers/EditCustomerModal';
@@ -11,6 +12,9 @@ const { Search } = Input;
 const { Title } = Typography;
 
 const Customers = () => {
+  const { canUpdate } = usePermissions();
+  const canManageCustomers = canUpdate('customer'); // confirm module name with backend
+
   const {
     customers,
     loading,
@@ -39,19 +43,18 @@ const Customers = () => {
   };
 
   const handleEdit = (customer) => {
+    if (!canManageCustomers) return;
     setEditingCustomer(customer);
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (values) => {
+    if (!canManageCustomers) return;
     try {
       await updateCustomer(editingCustomer.id, values);
-
-      await loadCustomers(null, true); // reload customers
-
+      await loadCustomers(null, true);
       setIsEditModalOpen(false);
       setEditingCustomer(null);
-
       message.success('Customer updated successfully');
     } catch (error) {
       message.error('Error updating customer: ' + error.message);
@@ -63,11 +66,22 @@ const Customers = () => {
   };
 
   const handleToggleStatus = async (customer) => {
+    if (!canManageCustomers) return;
     try {
       await toggleCustomerStatus(customer);
       await loadCustomers(null, true);
     } catch (error) {
       message.error(error.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!canManageCustomers) return;
+    try {
+      await deleteCustomer(id);
+      await loadCustomers(null, true);
+    } catch (error) {
+      message.error(error.message || 'Failed to delete customer');
     }
   };
 
@@ -96,14 +110,16 @@ const Customers = () => {
           onChange={(e) => setSearchText(e.target.value)}
           value={searchText}
         />
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          Add Customer
-        </Button>
+        {canManageCustomers && (
+          <Button
+            type="primary"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            Add Customer
+          </Button>
+        )}
       </div>
 
       <Card
@@ -126,12 +142,13 @@ const Customers = () => {
             nextCursor={nextCursor}
             skeletonRows={skeletonRows}
             onEdit={handleEdit}
-            onDelete={deleteCustomer}
+            onDelete={handleDelete}
             onLoadMore={(cursor) =>
               loadCustomers(cursor, false)
             }
             onView={handleViewCustomer}
             onToggleStatus={handleToggleStatus}
+            canManageCustomers={canManageCustomers}
           />
 
           <CustomerDetailsModal
@@ -142,27 +159,28 @@ const Customers = () => {
               setSelectedCustomer(null);
             }}
           />
-
-
-
         </div>
       </Card >
 
-      <EditCustomerModal
-        open={isEditModalOpen}
-        customer={editingCustomer}
-        onCancel={() => {
-          setIsEditModalOpen(false);
-          setEditingCustomer(null);
-        }}
-        onSubmit={handleEditSubmit}
-      />
+      {canManageCustomers && (
+        <EditCustomerModal
+          open={isEditModalOpen}
+          customer={editingCustomer}
+          onCancel={() => {
+            setIsEditModalOpen(false);
+            setEditingCustomer(null);
+          }}
+          onSubmit={handleEditSubmit}
+        />
+      )}
 
-      <AddCustomerModal
-        open={isAddModalOpen}
-        onCancel={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-      />
+      {canManageCustomers && (
+        <AddCustomerModal
+          open={isAddModalOpen}
+          onCancel={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+        />
+      )}
     </div >
   );
 };

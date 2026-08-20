@@ -124,6 +124,7 @@ export default function RefundDetailModal({
     onReject,
     approving,
     rejecting,
+    canManageRefunds,
 }) {
     const [refundAmount, setRefundAmount] = useState(0);
     const [rejectionReason, setRejectionReason] = useState("");
@@ -143,6 +144,7 @@ export default function RefundDetailModal({
     if (!refund) return null;
 
     const isPending = refund.refundStatus?.toUpperCase() === "PENDING";
+    const canTakeAction = isPending && canManageRefunds;
 
     const handleApproveClick = () => {
         onApprove?.(refundAmount, adminNote);
@@ -163,8 +165,8 @@ export default function RefundDetailModal({
             open={open}
             onCancel={onClose}
             width={780}
-            footer={
-                isPending
+                        footer={
+                canTakeAction
                     ? [
                         <Button key="cancel" onClick={onClose}>
                             Close
@@ -417,85 +419,85 @@ export default function RefundDetailModal({
             </Card>
 
             {/* Approve / Reject action panel — only for pending refunds */}
-            {isPending && (
-    <>
-        <Divider
-            orientation="left"
-            style={{ margin: "16px 0 12px" }}
-        >
-            Take Action
-        </Divider>
-
-        <Card size="small">
-            <Row gutter={[12, 12]}>
-                <Col xs={24} sm={12}>
-                    <Text
-                        type="secondary"
-                        style={{ fontSize: 12 }}
+            {isPending && canTakeAction && (
+                <>
+                    <Divider
+                        orientation="left"
+                        style={{ margin: "16px 0 12px" }}
                     >
-                        Refund Amount
-                    </Text>
+                        Take Action
+                    </Divider>
 
-                    <InputNumber
-                        min={0}
-                        max={parseFloat(refund.finalAmount || 0)}
-                        value={refundAmount}
-                        onChange={(val) =>
-                            setRefundAmount(val ?? 0)
-                        }
-                        style={{
-                            width: "100%",
-                            marginTop: 4,
-                        }}
-                        prefix="₹"
-                        precision={2}
-                        step={0.01}
-                    />
-                </Col>
+                    <Card size="small">
+                        <Row gutter={[12, 12]}>
+                            <Col xs={24} sm={12}>
+                                <Text
+                                    type="secondary"
+                                    style={{ fontSize: 12 }}
+                                >
+                                    Refund Amount
+                                </Text>
 
-                <Col xs={24}>
-                    <Text
-                        type="secondary"
-                        style={{ fontSize: 12 }}
-                    >
-                        Admin Note (optional)
-                    </Text>
+                                <InputNumber
+                                    min={0}
+                                    max={parseFloat(refund.finalAmount || 0)}
+                                    value={refundAmount}
+                                    onChange={(val) =>
+                                        setRefundAmount(val ?? 0)
+                                    }
+                                    style={{
+                                        width: "100%",
+                                        marginTop: 4,
+                                    }}
+                                    prefix="₹"
+                                    precision={2}
+                                    step={0.01}
+                                />
+                            </Col>
 
-                    <TextArea
-                        rows={2}
-                        value={adminNote}
-                        onChange={(e) =>
-                            setAdminNote(e.target.value)
-                        }
-                        placeholder="Internal note for this decision..."
-                        style={{ marginTop: 4 }}
-                    />
-                </Col>
+                            <Col xs={24}>
+                                <Text
+                                    type="secondary"
+                                    style={{ fontSize: 12 }}
+                                >
+                                    Admin Note (optional)
+                                </Text>
 
-                {showRejectInput && (
-                    <Col xs={24}>
-                        <Text
-                            type="secondary"
-                            style={{ fontSize: 12 }}
-                        >
-                            Rejection Reason
-                        </Text>
+                                <TextArea
+                                    rows={2}
+                                    value={adminNote}
+                                    onChange={(e) =>
+                                        setAdminNote(e.target.value)
+                                    }
+                                    placeholder="Internal note for this decision..."
+                                    style={{ marginTop: 4 }}
+                                />
+                            </Col>
 
-                        <TextArea
-                            rows={3}
-                            value={rejectionReason}
-                            onChange={(e) =>
-                                setRejectionReason(e.target.value)
-                            }
-                            placeholder="Explain why this refund is being rejected..."
-                            style={{ marginTop: 4 }}
-                        />
-                    </Col>
-                )}
-            </Row>
-        </Card>
-    </>
-)}
+                            {showRejectInput && (
+                                <Col xs={24}>
+                                    <Text
+                                        type="secondary"
+                                        style={{ fontSize: 12 }}
+                                    >
+                                        Rejection Reason
+                                    </Text>
+
+                                    <TextArea
+                                        rows={3}
+                                        value={rejectionReason}
+                                        onChange={(e) =>
+                                            setRejectionReason(e.target.value)
+                                        }
+                                        placeholder="Explain why this refund is being rejected..."
+                                        style={{ marginTop: 4 }}
+                                    />
+                                </Col>
+                            )}
+                        </Row>
+                    </Card>
+                </>
+            )}
         </Modal>
     );
 }

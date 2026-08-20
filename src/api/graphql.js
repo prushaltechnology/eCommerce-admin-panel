@@ -346,8 +346,8 @@ export const GRAPHQL_QUERIES = {
   `,
 
   GET_STOCK: `
-    query GetStock($productId: Int!) {
-      stock(productId: $productId) {
+    query GetStock($productId: Int!, $inventoryType: String!) {
+      stock(productId: $productId, inventoryType: $inventoryType) {
         quantity
         reservedQuantity
         availableQuantity

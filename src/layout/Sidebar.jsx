@@ -138,6 +138,13 @@ const ADMIN_MENU = [
 
 /* =========================================================
    PERMISSION MENU
+   =========================================================
+   IMPORTANT: the `subModule` strings passed to hasPermission()
+   for Orders must match exactly what the API returns in
+   permissions[].subModule (system_order, bulk_order,
+   custom_order, user_order, bulk_order_enquiry,
+   order_dashboard) — mismatched strings silently hide the
+   whole Orders menu even when the user has access.
    ========================================================= */
 
 const buildPermissionMenu = (hasPermission) => {
@@ -186,31 +193,45 @@ const buildPermissionMenu = (hasPermission) => {
   /* Orders */
   const orderChildren = [];
 
-  if (hasPermission("order", "view", "system")) {
+  if (hasPermission("order", "view", "order_dashboard")) {
+    orderChildren.push({
+      key: "/orders/dashboard",
+      label: "Orders Dashboard",
+    });
+  }
+
+  if (hasPermission("order", "view", "system_order")) {
     orderChildren.push({
       key: "/orders/system",
       label: "System Orders",
     });
   }
 
-  if (hasPermission("order", "view", "bulk")) {
+  if (hasPermission("order", "view", "bulk_order")) {
     orderChildren.push({
       key: "/orders/bulk",
       label: "Bulk Orders",
     });
   }
 
-  if (hasPermission("order", "view", "normal")) {
+  if (hasPermission("order", "view", "custom_order")) {
     orderChildren.push({
       key: "/orders/custom",
-      label: "Normal Orders",
+      label: "Custom Orders",
     });
   }
 
-  if (hasPermission("order", "view", "admin")) {
+  if (hasPermission("order", "view", "user_order")) {
     orderChildren.push({
       key: "/orders/user",
       label: "User Orders",
+    });
+  }
+
+  if (hasPermission("order", "view", "bulk_order_enquiry")) {
+    orderChildren.push({
+      key: "/orders/bulk-enquiries",
+      label: "Bulk Order Enquiries",
     });
   }
 
@@ -233,7 +254,7 @@ const buildPermissionMenu = (hasPermission) => {
   }
 
   /* Refunds */
-  if (hasPermission("transaction", "view")) {
+  if (hasPermission("refund", "view")) {
     items.push({
       key: "/refunds",
       label: "Refunds",
@@ -250,12 +271,41 @@ const buildPermissionMenu = (hasPermission) => {
     });
   }
 
+  /* Customers */
+  if (hasPermission("customer", "view")) {
+    items.push({
+      key: "/customers",
+      label: "Customers",
+      icon: <UserOutlined />,
+    });
+  }
+
+  /* Employees */
+  if (hasPermission("employee", "view")) {
+    items.push({
+      key: "/employees",
+      label: "Employees",
+      icon: <TeamOutlined />,
+    });
+  }
+
+  /* Store Settings */
+  if (hasPermission("store_settings", "view")) {
+    items.push({
+      key: "/settings",
+      label: "Store Settings",
+      icon: <SettingOutlined />,
+    });
+  }
+
   /* Enquiries */
-  items.push({
-    key: "/enquiries",
-    label: "Enquiries",
-    icon: <MailOutlined />,
-  });
+  if (hasPermission("enquiry", "view")) {
+    items.push({
+      key: "/enquiries",
+      label: "Enquiries",
+      icon: <MailOutlined />,
+    });
+  }
 
   /* Logout */
   items.push({
@@ -332,6 +382,12 @@ export default function Sidebar({
   const items = isAdmin
     ? ADMIN_MENU
     : buildPermissionMenu(hasPermission);
+
+  /* =========================================================
+     STOCK ALERT PERMISSION
+     ========================================================= */
+
+  const canViewStock = isAdmin || hasPermission("stock", "view");
 
   /* =========================================================
      ORDERS BADGE
@@ -629,6 +685,7 @@ export default function Sidebar({
               ================================================= */}
 
           {!collapsed &&
+            canViewStock &&
             (showCriticalAlert ||
               showOutOfStockAlert) && (
               <div

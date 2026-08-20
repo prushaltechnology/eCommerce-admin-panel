@@ -70,6 +70,8 @@ function PaymentStatusTag({ status }) {
     );
 }
 
+// Invisible div at table bottom — fires onVisible when scrolled into view.
+// Matches TransactionTable.jsx's pattern.
 function ScrollSentinel({ onVisible, hasMore, loadingMore }) {
     const ref = useRef(null);
 
@@ -217,6 +219,7 @@ export default function RefundTable({
     onQuickReject,
     approvingRefundId,
     rejectingRefundId,
+    canManageRefunds,
 }) {
     const [quickModalOpen, setQuickModalOpen] = useState(false);
     const [quickModalMode, setQuickModalMode] = useState("approve");
@@ -343,50 +346,54 @@ export default function RefundTable({
                             />
                         </Tooltip>
 
-                        <Tooltip
-                            title={
-                                isPending
-                                    ? "Approve Refund"
-                                    : `Cannot approve — status is ${record.refundStatus || "unknown"}`
-                            }
-                        >
-                            <Button
-                                type="primary"
-                                size="small"
-                                icon={<CheckCircleOutlined />}
-                                loading={isApproving}
-                                disabled={!isPending || isRejecting}
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    openQuickModal(record, "approve");
-                                }}
-                                style={
-                                    isPending
-                                        ? { background: "#52c41a", borderColor: "#52c41a" }
-                                        : undefined
-                                }
-                            />
-                        </Tooltip>
+                        {canManageRefunds && (
+                            <>
+                                <Tooltip
+                                    title={
+                                        isPending
+                                            ? "Approve Refund"
+                                            : `Cannot approve — status is ${record.refundStatus || "unknown"}`
+                                    }
+                                >
+                                    <Button
+                                        type="primary"
+                                        size="small"
+                                        icon={<CheckCircleOutlined />}
+                                        loading={isApproving}
+                                        disabled={!isPending || isRejecting}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            openQuickModal(record, "approve");
+                                        }}
+                                        style={
+                                            isPending
+                                                ? { background: "#52c41a", borderColor: "#52c41a" }
+                                                : undefined
+                                        }
+                                    />
+                                </Tooltip>
 
-                        <Tooltip
-                            title={
-                                isPending
-                                    ? "Reject Refund"
-                                    : `Cannot reject — status is ${record.refundStatus || "unknown"}`
-                            }
-                        >
-                            <Button
-                                danger
-                                size="small"
-                                icon={<CloseCircleOutlined />}
-                                loading={isRejecting}
-                                disabled={!isPending || isApproving}
-                                onClick={(event) => {
-                                    event.stopPropagation();
-                                    openQuickModal(record, "reject");
-                                }}
-                            />
-                        </Tooltip>
+                                <Tooltip
+                                    title={
+                                        isPending
+                                            ? "Reject Refund"
+                                            : `Cannot reject — status is ${record.refundStatus || "unknown"}`
+                                    }
+                                >
+                                    <Button
+                                        danger
+                                        size="small"
+                                        icon={<CloseCircleOutlined />}
+                                        loading={isRejecting}
+                                        disabled={!isPending || isApproving}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            openQuickModal(record, "reject");
+                                        }}
+                                    />
+                                </Tooltip>
+                            </>
+                        )}
                     </Space>
                 );
             },
@@ -424,7 +431,7 @@ export default function RefundTable({
             />
 
             <QuickActionModal
-                open={quickModalOpen}
+                open={canManageRefunds && quickModalOpen}
                 mode={quickModalMode}
                 record={quickModalRecord}
                 onClose={closeQuickModal}
