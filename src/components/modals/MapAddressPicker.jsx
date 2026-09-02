@@ -17,7 +17,7 @@ import {
 // Your Geoapify API key. CRA-style env var shown here — if your admin
 // panel uses Vite instead, swap this for `import.meta.env.VITE_GEOAPIFY_KEY`
 // (and name the env var accordingly in your .env file).
-const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_KEY;
+const GEOAPIFY_KEY = import.meta.env.VITE_GEOAPIFY_KEY || "a7d46c39bb424ac2bc890c2d3f1fecd6";
 
 const pinIcon = new L.Icon({
     iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
