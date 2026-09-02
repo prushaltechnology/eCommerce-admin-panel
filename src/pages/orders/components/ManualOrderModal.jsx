@@ -115,66 +115,66 @@ const ManualOrderModal = ({
 
   // ── Delivery charge helper ─────────────────────────────────────────────────
   const fetchDeliveryCharge = async (customer, address) => {
-    if (!customer || !address) {
-      setDeliveryCharge(0);
-      return;
-    }
+  if (!customer || !address) {
+    setDeliveryCharge(0);
+    return;
+  }
 
-    const addressStr = [
-      address.addressLine,
-      address.city,
-      address.state,
-    ]
-      .filter(Boolean)
-      .join(" ");
+  const addressStr = [
+    address.addressLine,
+    address.city,
+    address.state,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-    const phone =
-      customer.phone && customer.phone !== "N/A"
-        ? customer.phone
-        : "";
+  const phone =
+    customer.phone && customer.phone !== "N/A"
+      ? customer.phone
+      : "";
 
-    if (!addressStr) {
-      setDeliveryCharge(0);
-      return;
-    }
+  if (!addressStr) {
+    setDeliveryCharge(0);
+    return;
+  }
 
-    // Calculate subtotal and parcel weight
-    const productSubtotal = orderItems.reduce(
-      (total, item) => total + Number(item.subtotal || 0),
-      0
+  const productSubtotal = orderItems.reduce(
+    (total, item) => total + Number(item.subtotal || 0),
+    0
+  );
+
+  const parcelWeight = orderItems.reduce((total, item) => {
+    const weight = Number(item.product?.weight || 0);
+    const quantity = Number(item.quantity || 1);
+    return total + weight * quantity;
+  }, 0);
+
+  const deliveryMode = "STANDARD";
+
+  setDeliveryChargeLoading(true);
+
+  try {
+    const res = await calculateDeliveryCharge(
+      addressStr,
+      phone,
+      productSubtotal,
+      deliveryMode,
+      parcelWeight,
+      address.latitude != null ? Number(address.latitude) : null,
+      address.longitude != null ? Number(address.longitude) : null,
     );
 
-    const parcelWeight = orderItems.reduce((total, item) => {
-      const weight = Number(item.product?.weight || 0); // Change if your product uses another field
-      const quantity = Number(item.quantity || 1);
-
-      return total + weight * quantity;
-    }, 0);
-
-    const deliveryMode = "STANDARD"; // or "EXPRESS" if selected by the user
-
-    setDeliveryChargeLoading(true);
-
-    try {
-      const res = await calculateDeliveryCharge(
-        addressStr,
-        phone,
-        productSubtotal,
-        deliveryMode,
-        parcelWeight
-      );
-
-      if (res.success) {
-        setDeliveryCharge(res.customerDeliveryCharge ?? res.deliveryCharge ?? 0);
-      } else {
-        setDeliveryCharge(0);
-      }
-    } catch {
+    if (res.success) {
+      setDeliveryCharge(res.customerDeliveryCharge ?? res.deliveryCharge ?? 0);
+    } else {
       setDeliveryCharge(0);
-    } finally {
-      setDeliveryChargeLoading(false);
     }
-  };
+  } catch {
+    setDeliveryCharge(0);
+  } finally {
+    setDeliveryChargeLoading(false);
+  }
+};
 
   // ── Customer handlers ──────────────────────────────────────────────────────
   const handleCustomerSelect = (customerId) => {
@@ -219,35 +219,35 @@ const ManualOrderModal = ({
 
   // ── Address handlers ───────────────────────────────────────────────────────
   const handleAddNewAddress = async (values) => {
-    if (!selectedCustomer?.id) {
-      message.error('Please select customer first');
-      return;
+  if (!selectedCustomer?.id) {
+    message.error('Please select customer first');
+    return;
+  }
+  setAddAddressLoading(true);
+  try {
+    const res = await addShippingAddress(selectedCustomer.id, values);
+    if (res.success) {
+      const newAddress = res.address; // use the server's actual persisted record
+      const updatedCustomer = {
+        ...selectedCustomer,
+        addresses: [...(selectedCustomer.addresses || []), newAddress],
+      };
+      setSelectedCustomer(updatedCustomer);
+      setSelectedAddress(newAddress);
+      form.setFieldsValue({ deliveryAddress: formatAddress(newAddress) });
+      message.success('Address added successfully');
+      setAddAddressModalVisible(false);
+      addressForm.resetFields();
+      try { upsertCustomer(updatedCustomer); } catch { /* non-critical */ }
+    } else {
+      message.error(res.message || 'Failed to add address');
     }
-    setAddAddressLoading(true);
-    try {
-      const res = await addShippingAddress(selectedCustomer.id, values);
-      if (res.success) {
-        const newAddress = { id: res.addressId, ...values };
-        const updatedCustomer = {
-          ...selectedCustomer,
-          addresses: [...(selectedCustomer.addresses || []), newAddress],
-        };
-        setSelectedCustomer(updatedCustomer);
-        setSelectedAddress(newAddress);
-        form.setFieldsValue({ deliveryAddress: formatAddress(newAddress) });
-        message.success('Address added successfully');
-        setAddAddressModalVisible(false);
-        addressForm.resetFields();
-        try { upsertCustomer(updatedCustomer); } catch { /* non-critical */ }
-      } else {
-        message.error(res.message || 'Failed to add address');
-      }
-    } catch (error) {
-      message.error('Failed to add address: ' + error.message);
-    } finally {
-      setAddAddressLoading(false);
-    }
-  };
+  } catch (error) {
+    message.error('Failed to add address: ' + error.message);
+  } finally {
+    setAddAddressLoading(false);
+  }
+};
 
   // ── Item change (needs cacheProduct side-effect) ───────────────────────────
   const handleItemChangeWithCache = (itemId, field, value) => {

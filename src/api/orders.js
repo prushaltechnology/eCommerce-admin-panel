@@ -86,6 +86,8 @@ export const calculateDeliveryCharge = async (
   productSubtotal,
   deliveryMode,
   parcelWeight = null,
+  latitude = null,
+  longitude = null,
 ) => {
   try {
     const data = await graphqlRequest(
@@ -96,6 +98,8 @@ export const calculateDeliveryCharge = async (
         productSubtotal,
         deliveryMode,
         parcelWeight,
+        latitude,
+        longitude,
       },
     );
 
@@ -249,7 +253,9 @@ export const addShippingAddress = async (customerId, values) => {
         $city: String!,
         $state: String!,
         $pincode: String!,
-        $landmark: String
+        $landmark: String,
+        $latitude: Float,
+        $longitude: Float
       ) {
 
         addShippingAddress(
@@ -259,6 +265,8 @@ export const addShippingAddress = async (customerId, values) => {
           state: $state
           pincode: $pincode
           landmark: $landmark
+          latitude: $latitude
+          longitude: $longitude
         ) {
 
           address {
@@ -269,6 +277,8 @@ export const addShippingAddress = async (customerId, values) => {
             pincode
             isDefault
             landmark
+            latitude
+            longitude
           }
         }
       }
@@ -281,6 +291,8 @@ export const addShippingAddress = async (customerId, values) => {
       state: values.state,
       pincode: values.pincode,
       landmark: values.landmark || "",
+      latitude: values.latitude ?? null,
+      longitude: values.longitude ?? null,
     };
 
     const data = await graphqlRequest(mutation, variables);

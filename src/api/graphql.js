@@ -854,6 +854,8 @@ query GetAllStocks(
             state
             pincode
             isDefault
+            latitude
+            longitude
           }
         }
         nextCursor
@@ -908,6 +910,8 @@ query GetAllStocks(
     $productSubtotal: Float!
     $deliveryMode: String!
     $parcelWeight: Float
+    $latitude: Float
+    $longitude: Float
   ) {
     calculateDeliveryCharge(
       address: $address
@@ -915,6 +919,8 @@ query GetAllStocks(
       productSubtotal: $productSubtotal
       deliveryMode: $deliveryMode
       parcelWeight: $parcelWeight
+      latitude: $latitude
+      longitude: $longitude
     ) {
       success
       deliveryCharge
