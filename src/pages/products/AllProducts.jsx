@@ -78,7 +78,7 @@ const AllProducts = () => {
       loadProducts(null, true);
     }, 500);
     return () => clearTimeout(timer);
-  }, [categoryFilter, searchText]);
+  }, [categoryFilter, searchText, statusFilter]);
 
   useEffect(() => {
     const tableBody = tableContainerRef.current?.querySelector('.ant-table-body');
@@ -122,7 +122,8 @@ const AllProducts = () => {
       const categoryId = categoryFilter === 'all' ? null : categoryFilter;
       const search = searchText ? searchText : null;
 
-      const result = await fetchProducts(10, cursor, search, categoryId, !isNewSearch);
+      const isActive = statusFilter === 'all' ? null : statusFilter === 'active';
+      const result = await fetchProducts(10, cursor, search, categoryId, isActive, !isNewSearch);
 
       if (result) {
         if (isNewSearch) {
@@ -721,17 +722,22 @@ const AllProducts = () => {
           <Table
             rowKey="id"
             columns={columns}
-            dataSource={loading ? skeletonRows : visibleProducts}
+            dataSource={loading ? skeletonRows : products}
             size="small"
             pagination={false}
             scroll={{ x: 'max-content', y: 'calc(100vh - 320px)' }}
             locale={{ emptyText: loading ? '' : 'No products found' }}
           />
-          {!hasMore && visibleProducts.length > 0 && !loading && !fetchingMore && (
+          {!hasMore && products.length > 0 && !loading && !fetchingMore && (
             <div style={{ textAlign: "center", padding: "10px", color: '#999', fontSize: '12px', borderTop: '1px solid #f0f0f0' }}>
               No more products to load
             </div>
           )}
+          {/* {!hasMore && visibleProducts.length > 0 && !loading && !fetchingMore && (
+            <div style={{ textAlign: "center", padding: "10px", color: '#999', fontSize: '12px', borderTop: '1px solid #f0f0f0' }}>
+              No more products to load
+            </div>
+          )} */}
         </div>
       </Card>
 

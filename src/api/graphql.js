@@ -173,8 +173,8 @@ export const GRAPHQL_QUERIES = {
 `,
 
   GET_ALL_PRODUCTS: `
-    query GetAllProducts($first: Int!, $after: String, $search: String, $categoryId: Int) {
-      products(first: $first, after: $after, search: $search, categoryId: $categoryId) {
+    query GetAllProducts($first: Int!, $after: String, $search: String, $categoryId: Int, $isActive: Boolean) {
+      products(first: $first, after: $after, search: $search, categoryId: $categoryId, isActive: $isActive) {
         products {
           id
           name
@@ -199,7 +199,6 @@ export const GRAPHQL_QUERIES = {
             quantity
             availableQuantity
           }
-
           systemStock {
             quantity
             availableQuantity
@@ -209,10 +208,10 @@ export const GRAPHQL_QUERIES = {
             image
             sortOrder
           }
-            category{
-        id
-        name
-      }
+          category {
+            id
+            name
+          }
         }
         nextCursor
         hasMore

@@ -7,17 +7,16 @@ export const getAllProducts = async (
   after = null,
   search = null,
   categoryId = null,
+  isActive = null,
 ) => {
   try {
     const variables = { first };
     if (after) variables.after = after;
     if (search) variables.search = search;
     if (categoryId) variables.categoryId = Number(categoryId);
+    if (isActive !== null) variables.isActive = isActive;
 
-    const data = await graphqlRequest(
-      GRAPHQL_QUERIES.GET_ALL_PRODUCTS,
-      variables,
-    );
+    const data = await graphqlRequest(GRAPHQL_QUERIES.GET_ALL_PRODUCTS, variables);
 
     return {
       success: true,
