@@ -463,6 +463,8 @@ const ProductModal = ({
               rules={[{ required: true, message: "Select a unit" }]}
             >
               <Select placeholder="Select a unit">
+                <Option value="kg">KG</Option>
+                {/* <Option value="g">Gram</Option> */}
                 <Option value="piece">Piece</Option>
                 <Option value="stem">Stem</Option>
                 <Option value="bunch">Bunch</Option>

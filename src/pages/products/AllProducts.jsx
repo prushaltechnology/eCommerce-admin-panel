@@ -516,8 +516,8 @@ const AllProducts = () => {
             />
           );
         }
-
-        const qty = stockObj?.quantity || 0;
+        // console.log('storefrontStock:', stockObj);
+        const qty = stockObj?.availableQuantity || 0;
 
         return (
           <Tag
@@ -543,7 +543,8 @@ const AllProducts = () => {
             />
           );
         }
-        const qty = stockObj?.quantity || 0;
+        // console.log('systemStock:', stockObj);
+        const qty = stockObj?.availableQuantity || 0;
         return (
           <Tag color={qty === 0 ? 'red' : qty < 10 ? 'orange' : 'green'}>
             {qty} units
