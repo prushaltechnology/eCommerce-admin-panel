@@ -6,6 +6,7 @@ import {
   getCustomers,
   updateOrderStatus,
   cancelCustomerOrder,
+  retryBorzoBooking as retryBorzoBookingApi,
 } from "../api/orders";
 import { getAllProducts } from "../api/products";
 
@@ -307,6 +308,34 @@ const fetchMoreOrders = useCallback(async () => {
     },
     [],
   );
+    const retryBorzoBooking = useCallback(async (orderId) => {
+    try {
+      const res = await retryBorzoBookingApi(orderId);
+
+      if (res.success) {
+        // Update just this row: new status + the new borzoOrder
+        setOrders((prev) =>
+          prev.map((order) =>
+            String(order.id) === String(orderId)
+              ? {
+                  ...order,
+                  status: res.order?.status ?? order.status,
+                  borzoOrder: res.order?.borzoOrder ?? order.borzoOrder,
+                }
+              : order,
+          ),
+        );
+        message.success(res.message || "Delivery booked successfully");
+      } else {
+        message.error(res.message || "Failed to book delivery");
+      }
+
+      return res;
+    } catch (err) {
+      message.error("Failed to book delivery: " + err.message);
+      return { success: false, message: err.message };
+    }
+  }, []);
 
   return {
     orders,
@@ -330,6 +359,7 @@ const fetchMoreOrders = useCallback(async () => {
     createOrder,
     changeOrderStatus,
     cancelOrder,
+    retryBorzoBooking,
     upsertCustomer,
   };
 }

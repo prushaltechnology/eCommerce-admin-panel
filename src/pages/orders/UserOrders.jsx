@@ -13,7 +13,7 @@ const UserOrders = () => {
   const canManageOrders = canUpdate('order', 'system_order');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
+  const [retryingBorzoOrderId, setRetryingBorzoOrderId] = useState(null);
   // Single date instead of date range
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -27,7 +27,7 @@ const UserOrders = () => {
   // Infinite scroll loading indicator
   const [tableScrollLoading, setTableScrollLoading] = useState(false);
 
-  const {
+   const {
     orders,
     loading,
     fetchOrders,
@@ -35,6 +35,7 @@ const UserOrders = () => {
     ordersHasMore,
     changeOrderStatus,
     cancelOrder,
+    retryBorzoBooking,
     ordersStats,
   } = useOrders();
 
@@ -98,14 +99,27 @@ const UserOrders = () => {
   };
 
   // Cancel order
-  const handleCancelOrder = async (order) => {
+    // Cancel order  (FIXED: forward reason + note from the cancel modal)
+  const handleCancelOrder = async (order, reason, note) => {
     if (!order?.id) return;
 
     try {
       setCancellingOrderId(order.id);
-      await cancelOrder(order.id);
+      await cancelOrder(order.id, reason, note);
     } finally {
       setCancellingOrderId(null);
+    }
+  };
+
+  // Retry Borzo booking
+  const handleRetryBorzo = async (order) => {
+    if (!order?.id) return;
+
+    try {
+      setRetryingBorzoOrderId(order.id);
+      await retryBorzoBooking(order.id);
+    } finally {
+      setRetryingBorzoOrderId(null);
     }
   };
 
@@ -151,7 +165,7 @@ const UserOrders = () => {
           minHeight: 0,
         }}
       >
-        <SystemOrdersTable
+                <SystemOrdersTable
           loading={loading}
           orders={filteredOrders}
           hasMore={ordersHasMore}
@@ -159,9 +173,10 @@ const UserOrders = () => {
           onViewDetails={handleViewDetails}
           onCancelOrder={handleCancelOrder}
           cancellingOrderId={cancellingOrderId}
+          onRetryBorzo={handleRetryBorzo}
+          retryingBorzoOrderId={retryingBorzoOrderId}
           onLoadMore={handleLoadMore}
           canManageOrders={canManageOrders}
-
         />
       </div>
 

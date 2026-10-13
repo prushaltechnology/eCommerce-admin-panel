@@ -373,3 +373,34 @@ export const sendPaymentReminder = async (orderId) => {
     };
   }
 };
+
+export const retryBorzoBooking = async (orderId) => {
+  try {
+    const data = await graphqlRequest(GRAPHQL_QUERIES.RETRY_BORZO_BOOKING, {
+      orderId: parseInt(orderId, 10),
+    });
+
+    const result = data?.retryBorzoBooking;
+
+    if (!result) {
+      return { success: false, message: "Failed to book delivery" };
+    }
+
+    return {
+      success: result.success ?? false,
+      message:
+        result.message ||
+        (result.success
+          ? "Delivery booked successfully"
+          : "Failed to book delivery"),
+      order: result.order || null,
+    };
+  } catch (error) {
+    // graphqlRequest throws the backend's GraphQLError message,
+    // e.g. "Borzo booking failed: insufficient balance"
+    return {
+      success: false,
+      message: error.message || "Failed to book delivery",
+    };
+  }
+};

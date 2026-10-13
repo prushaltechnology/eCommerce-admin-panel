@@ -1011,6 +1011,51 @@ query GetAllStocks(
     }
   }
 `,
+
+ RETRY_BORZO_BOOKING: `
+  mutation RetryBorzoBooking($orderId: Int!) {
+    retryBorzoBooking(orderId: $orderId) {
+      success
+      message
+      order {
+        id
+        status
+        borzoOrder {
+          borzoOrderId
+          orderName
+          status
+          statusDescription
+          paymentAmount
+          deliveryFee
+          trackingUrl
+          deliveryStatus
+
+          pickup {
+            address
+            name
+            phone
+          }
+
+          drop {
+            address
+            name
+            phone
+          }
+
+          courier {
+            courierId
+            name
+            phone
+            photoUrl
+            latitude
+            longitude
+          }
+        }
+      }
+    }
+  }
+`,
+
 };
 
 export default graphqlRequest;

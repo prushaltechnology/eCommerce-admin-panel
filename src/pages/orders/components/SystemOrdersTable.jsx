@@ -2,6 +2,7 @@ import {
   Button,
   Input,
   Modal,
+  Popconfirm,
   Skeleton,
   Space,
   Table,
@@ -22,7 +23,8 @@ import {
   QuestionCircleOutlined,
   UndoOutlined,
   StopOutlined,
-  CalendarOutlined,
+CalendarOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 
 const getStatusIcon = (status) => {
@@ -95,6 +97,15 @@ const formatStatus = (status) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+// Home-delivery order that should have a courier but doesn't
+// (automatic Borzo booking failed or never ran).
+const needsBorzoBooking = (record) =>
+  !record.borzoOrder &&
+  record.purchaseType?.toUpperCase() === 'HOME_DELIVERY' &&
+  ['payment_successful', 'processing', 'confirmed'].includes(
+    record.status?.toLowerCase(),
+  );
+
 const getProductImage = (product) => {
   const validImage = product?.images?.find(img => img.image && img.image.trim() !== '');
   if (!validImage) return null;
@@ -116,6 +127,8 @@ const SystemOrdersTable = ({
   onViewDetails,
   onCancelOrder,
   cancellingOrderId,
+  onRetryBorzo,
+  retryingBorzoOrderId,
   canManageOrders,
   onLoadMore,
 }) => {
@@ -345,25 +358,25 @@ const SystemOrdersTable = ({
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status, record) =>
+           render: (status, record) =>
         record.isSkeleton ? (
-          <Skeleton.Button
-            active
-            size="small"
-            style={{ width: 120 }}
-          />
+          <Skeleton.Button active size="small" style={{ width: 120 }} />
         ) : (
-          <Tag
-            color={getStatusColor(status)}
-            icon={getStatusIcon(status)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-            }}
-          >
-            {formatStatus(status)}
-          </Tag>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            <Tag
+              color={getStatusColor(status)}
+              icon={getStatusIcon(status)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              {formatStatus(status)}
+            </Tag>
+
+            {needsBorzoBooking(record) && (
+              <Tag color="red" style={{ fontSize: 11 }}>
+                Delivery not booked
+              </Tag>
+            )}
+          </div>
         ),
     },
     {
@@ -414,6 +427,23 @@ const SystemOrdersTable = ({
                 onClick={() => onViewDetails(record)}
               />
             </Tooltip>
+                        {canManageOrders && needsBorzoBooking(record) && (
+              <Popconfirm
+                title="Book Borzo delivery?"
+                description="This books a courier now and charges your Borzo balance."
+                okText="Book now"
+                cancelText="No"
+                onConfirm={() => onRetryBorzo?.(record)}
+              >
+                <Tooltip title="Retry Borzo booking">
+                  <Button
+                    size="small"
+                    icon={<ReloadOutlined />}
+                    loading={retryingBorzoOrderId === record.id}
+                  />
+                </Tooltip>
+              </Popconfirm>
+          )}
 
             {canManageOrders && !cannotCancel && (
               <Tooltip title="Cancel Order">
