@@ -9,7 +9,8 @@ import {
     Table,
     Tag,
 } from 'antd';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -120,22 +121,13 @@ const StockTable = ({
     // effect and re-attach whenever these values change, instead of a
     // single mount-time subscription with refs. Simpler, and proven to
     // work in this app already.
-    useEffect(() => {
-        const tableBody = tableContainerRef.current?.querySelector('.ant-table-body');
-        if (tableBody) {
-            const handleScroll = (e) => {
-                const { scrollTop, scrollHeight, clientHeight } = e.target;
-                if (scrollHeight - scrollTop <= clientHeight + 50) {
-                    if (hasMore && !loading && !fetchingMore) {
-                        onLoadMore();
-                    }
-                }
-            };
-
-            tableBody.addEventListener('scroll', handleScroll);
-            return () => tableBody.removeEventListener('scroll', handleScroll);
-        }
-    }, [hasMore, loading, fetchingMore, onLoadMore]);
+    useInfiniteScroll({
+      containerRef: tableContainerRef,
+      hasMore,
+      loading: loading || fetchingMore,
+      itemCount: items.length,
+      onLoadMore: onLoadMore,
+    });
 
     const columns = [
         {

@@ -1,7 +1,8 @@
 import { EyeOutlined, TruckOutlined } from '@ant-design/icons';
 import { Button, Skeleton, Space, Table, Tag } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 
 const getStatusColor = (status) => {
     const colors = {
@@ -34,50 +35,13 @@ const BulkOrdersEnquiryTable = ({
     onLoadMore, onViewDetails, onTrackOrder, canManageOrders,
 }) => {
     const tableContainerRef = useRef(null);
-    useEffect(() => {
-        const tableBody =
-            tableContainerRef.current?.querySelector(
-                '.ant-table-body'
-            );
-
-        if (!tableBody) return;
-
-        const handleScroll = (e) => {
-            const {
-                scrollTop,
-                scrollHeight,
-                clientHeight,
-            } = e.target;
-
-            if (
-                scrollHeight - scrollTop <=
-                clientHeight + 50 &&
-                hasMore &&
-                nextCursor &&
-                !loading &&
-                !fetchingMore
-            ) {
-                onLoadMore(nextCursor);
-            }
-        };
-
-        tableBody.addEventListener(
-            'scroll',
-            handleScroll
-        );
-
-        return () =>
-            tableBody.removeEventListener(
-                'scroll',
-                handleScroll
-            );
-    }, [
-        hasMore,
-        nextCursor,
-        loading,
-        fetchingMore,
-        onLoadMore,
-    ]);
+    useInfiniteScroll({
+      containerRef: tableContainerRef,
+      hasMore,
+      loading: loading || fetchingMore,
+      itemCount: enquiries.length,
+      onLoadMore: () => onLoadMore(nextCursor),
+    });
     const columns = [
         {
             title: 'Enquiry ID',

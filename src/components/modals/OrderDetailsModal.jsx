@@ -166,8 +166,9 @@ const ItemImage = ({ item }) => {
 /* ── Main modal ────────────────────────────────────────────────── */
 
 const OrderDetailsModal = ({ open, order, onCancel, trackingData, trackingLoading }) => {
-  if (!order) return null;
+  // Hooks must run before any early return so their order never changes.
   const [sendingReminder, setSendingReminder] = useState(false);
+  if (!order) return null;
   const isHomeDelivery =
     order.purchaseType === 'HOME_DELIVERY' ||
     order.purchaseType === 'home_delivery';

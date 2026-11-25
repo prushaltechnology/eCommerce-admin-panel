@@ -173,8 +173,8 @@ export const GRAPHQL_QUERIES = {
 `,
 
   GET_ALL_PRODUCTS: `
-    query GetAllProducts($first: Int!, $after: String, $search: String, $categoryId: Int, $isActive: Boolean) {
-      products(first: $first, after: $after, search: $search, categoryId: $categoryId, isActive: $isActive) {
+    query GetAllProducts($first: Int!, $after: String, $search: String, $categoryId: Int, $isActive: Boolean, $isArchived: Boolean) {
+      products(first: $first, after: $after, search: $search, categoryId: $categoryId, isActive: $isActive, isArchived: $isArchived) {
         products {
           id
           name
@@ -190,6 +190,8 @@ export const GRAPHQL_QUERIES = {
           measureValue
           weight
           isActive
+          isArchived
+          archivedAt
           isFeatured
           isWishlisted
           isAddedcart

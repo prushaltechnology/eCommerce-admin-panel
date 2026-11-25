@@ -188,9 +188,10 @@ const Stock = () => {
     }
   };
 
-  const handleLoadMore = useCallback(() => {
-    loadStocks(searchText, nextCursor, false);
-  }, [loadStocks, searchText, nextCursor]);
+  const handleLoadMore = useCallback(
+    () => loadStocks(searchText, nextCursor, false),
+    [loadStocks, searchText, nextCursor],
+  );
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [productForm] = Form.useForm();

@@ -1,6 +1,8 @@
 import { Button, Card, Form, Input, Typography, message } from "antd";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { graphqlRequest } from "../api/graphql";
+import { RESET_PASSWORD } from "../graphql/mutations";
 
 const { Title, Text } = Typography;
 
@@ -8,32 +10,33 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const { token } = useParams();
+  // Backend reset links have the form /reset-password/<uid>/<token>
+  const { uid, token } = useParams();
 
   useEffect(() => {
-    console.log("Reset token:", token);
-    if (!token) {
-      message.error("Invalid or missing token!");
-      navigate("/forgot-password"); // redirect if no token
+    if (!uid || !token) {
+      message.error("Invalid or missing reset link!");
+      navigate("/login");
     }
-  }, [token, navigate]);
+  }, [uid, token, navigate]);
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const result = await dispatch(resetPassword({ 
-        token: token, 
-        password: values.password 
-      }));
-      
-      if (result.meta.requestStatus === 'fulfilled') {
-        message.success("Password reset successfully!", 5);
+      const data = await graphqlRequest(RESET_PASSWORD, {
+        uid,
+        token,
+        newPassword: values.password,
+      });
+
+      if (data?.resetPassword?.success) {
+        message.success(data.resetPassword.message || "Password reset successfully!", 5);
         navigate("/login");
       } else {
-        throw new Error(result.payload || "Password reset failed");
+        throw new Error(data?.resetPassword?.message || "Password reset failed");
       }
     } catch (error) {
-      message.error("Failed to reset password. Try again.", 5);
+      message.error(error.message || "Failed to reset password. Try again.", 5);
     } finally {
       setLoading(false);
     }
@@ -74,7 +77,9 @@ const ResetPassword = () => {
             name="password"
             rules={[
               { required: true, message: "Password is required" },
-              { min: 6, message: "Password must be at least 6 characters" },
+              { min: 8, message: "Password must be at least 8 characters" },
+              { pattern: /[A-Za-z]/, message: "Password must contain at least one letter" },
+              { pattern: /\d/, message: "Password must contain at least one number" },
             ]}
           >
             <Input.Password placeholder="Enter new password" size="large" />

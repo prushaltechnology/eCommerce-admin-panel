@@ -15,7 +15,8 @@ import {
     Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 const { Text } = Typography;
 
@@ -200,23 +201,13 @@ const DeliveryTable = ({
 }) => {
     const containerRef = useRef(null);
 
-    useEffect(() => {
-        const body = containerRef.current?.querySelector('.ant-table-body');
-        if (!body) return;
-
-        const onScroll = () => {
-            const { scrollTop, scrollHeight, clientHeight } = body;
-            if (
-                scrollHeight - scrollTop <= clientHeight + 60 &&
-                hasMore && nextCursor && !loading && !fetchingMore
-            ) {
-                onLoadMore(nextCursor);
-            }
-        };
-
-        body.addEventListener('scroll', onScroll, { passive: true });
-        return () => body.removeEventListener('scroll', onScroll);
-    }, [hasMore, nextCursor, loading, fetchingMore, onLoadMore]);
+    useInfiniteScroll({
+      containerRef: containerRef,
+      hasMore,
+      loading: loading || fetchingMore,
+      itemCount: rows.length,
+      onLoadMore: () => onLoadMore(nextCursor),
+    });
 
     const columns = buildColumns();
 

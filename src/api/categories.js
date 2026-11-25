@@ -2,14 +2,15 @@ import { graphqlRequest } from './graphql';
 
 // GraphQL Queries and Mutations for Categories
 const GET_ALL_CATEGORIES = `
-  query GetAllCategories($query: String, $first: Int!, $after: String) {
-    allCategories(query: $query, first: $first, after: $after) {
+  query GetAllCategories($query: String, $first: Int!, $after: String, $isArchived: Boolean) {
+    allCategories(query: $query, first: $first, after: $after, isArchived: $isArchived) {
       categories {
         id
         name
         description
         image
         isActive
+        isArchived
         parent {
           id
           name
@@ -21,6 +22,7 @@ const GET_ALL_CATEGORIES = `
       totalCategories
       activeCategories
       inactiveCategories
+      archivedCategories
     }
   }
 `;
@@ -82,6 +84,7 @@ export const getAllCategories = async ({
   query = null,
   first = 10,
   after = null,
+  isArchived = false,
 }) => {
   try {
     const response = await graphqlRequest(
@@ -90,6 +93,7 @@ export const getAllCategories = async ({
         query,
         first,
         after,
+        isArchived,
       }
     );
 
@@ -101,6 +105,7 @@ export const getAllCategories = async ({
       totalCategories: response.allCategories.totalCategories,
       activeCategories: response.allCategories.activeCategories,
       inactiveCategories: response.allCategories.inactiveCategories,
+      archivedCategories: response.allCategories.archivedCategories,
     };
   } catch (error) {
     return {

@@ -1,8 +1,10 @@
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, message, Popconfirm, Skeleton, Space, Table, Tag, Typography } from 'antd';
+import { DeleteOutlined, EditOutlined, InboxOutlined, PlusOutlined, UndoOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, message, Popconfirm, Segmented, Skeleton, Space, Table, Tag, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { createCategory, deleteCategory, getAllCategories, updateCategory } from '../api/categories';
+import { setCategoriesArchived } from '../api/productExcel';
 import CategoryModal from '../components/modals/CategoryModal';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 import usePermissions from '../hooks/usePermissions';
 // Helper function to convert File to base64
 const fileToBase64 = (file) => {
@@ -23,6 +25,8 @@ const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivedCount, setArchivedCount] = useState(0);
   const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [fetchingMore, setFetchingMore] = useState(false);
@@ -39,42 +43,15 @@ const Categories = () => {
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [searchText]);
+  }, [searchText, showArchived]);
 
-  useEffect(() => {
-    const tableBody =
-      tableContainerRef.current?.querySelector('.ant-table-body');
-
-    if (tableBody) {
-      const handleScroll = (e) => {
-        const {
-          scrollTop,
-          scrollHeight,
-          clientHeight
-        } = e.target;
-
-        if (
-          scrollHeight - scrollTop <= clientHeight + 50
-        ) {
-          if (
-            hasMore &&
-            !loading &&
-            !fetchingMore
-          ) {
-            loadCategories(nextCursor, false);
-          }
-        }
-      };
-
-      tableBody.addEventListener('scroll', handleScroll);
-
-      return () =>
-        tableBody.removeEventListener(
-          'scroll',
-          handleScroll
-        );
-    }
-  }, [hasMore, loading, fetchingMore, nextCursor]);
+  useInfiniteScroll({
+    containerRef: tableContainerRef,
+    hasMore,
+    loading: loading || fetchingMore,
+    itemCount: categories.length,
+    onLoadMore: () => loadCategories(nextCursor, false),
+  });
 
   const loadCategories = async (
     cursor = null,
@@ -91,6 +68,7 @@ const Categories = () => {
         query: searchText || null,
         first: 8,
         after: cursor,
+        isArchived: showArchived,
       });
 
       if (res.success) {
@@ -104,6 +82,7 @@ const Categories = () => {
 
         setNextCursor(res.nextCursor);
         setHasMore(res.hasMore);
+        setArchivedCount(res.archivedCategories || 0);
       } else {
         message.error(res.message || "Failed to load categories");
       }
@@ -192,6 +171,18 @@ const Categories = () => {
     );
     setIsModalVisible(true);
   };
+  const handleArchive = async (record, archived) => {
+    if (!canManageCategories) return;
+
+    try {
+      await setCategoriesArchived([record.id], archived);
+      message.success(archived ? `"${record.name}" archived` : `"${record.name}" restored`);
+      loadCategories(null, true);
+    } catch (error) {
+      message.error(error.message || (archived ? "Failed to archive category" : "Failed to restore category"));
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!canManageCategories) return;
 
@@ -395,6 +386,10 @@ const Categories = () => {
           );
         }
 
+        if (record.isArchived) {
+          return <Tag>ARCHIVED</Tag>;
+        }
+
         return (
           <Tag color={isActive !== false ? "green" : "red"}>
             {isActive !== false ? "ACTIVE" : "INACTIVE"}
@@ -430,6 +425,25 @@ const Categories = () => {
               onClick={() => handleEdit(record)}
             />
 
+            {record.isArchived ? (
+              <Button
+                size='small'
+                title="Restore"
+                aria-label="Restore"
+                icon={<UndoOutlined />}
+                onClick={() => handleArchive(record, false)}
+              />
+            ) : (
+              <Popconfirm
+                title="Archive category"
+                description="The category and all its products will be hidden from the store. Products keep their own settings and come back when you restore it."
+                okText="Archive"
+                onConfirm={() => handleArchive(record, true)}
+              >
+                <Button size='small' title="Archive" aria-label="Archive" icon={<InboxOutlined />} />
+              </Popconfirm>
+            )}
+
             <Popconfirm
               title="Delete Category"
               description="Are you sure you want to delete this category?"
@@ -463,6 +477,7 @@ const Categories = () => {
             flexWrap: "wrap",
           }}
         >
+          <Space size="small" wrap>
           <Search
             placeholder="Search categories..."
             size="small"
@@ -474,6 +489,16 @@ const Categories = () => {
               maxWidth: "100%",
             }}
           />
+          <Segmented
+            size="small"
+            value={showArchived ? 'archived' : 'current'}
+            onChange={(value) => setShowArchived(value === 'archived')}
+            options={[
+              { label: 'Current', value: 'current' },
+              { label: `Archived${archivedCount ? ` (${archivedCount})` : ''}`, value: 'archived' },
+            ]}
+          />
+          </Space>
 
           {canManageCategories && (
             <Button

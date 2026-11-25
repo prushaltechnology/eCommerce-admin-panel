@@ -52,56 +52,12 @@ const CustomOrders = () => {
     return () => clearTimeout(timeout);
   }, [fetchOrders, searchText, selectedDate]);
 
-  useEffect(() => {
-    const tableBody =
-      tableWrapperRef.current?.querySelector(
-        '.ant-table-body'
-      );
-
-    if (!tableBody) return;
-
-    const handleScroll = (event) => {
-      const target = event.target;
-
-      if (
-        loading ||
-        tableScrollLoading ||
-        !hasMore
-      ) {
-        return;
-      }
-
-      if (
-        target.scrollTop +
-        target.clientHeight >=
-        target.scrollHeight - 80
-      ) {
-        setTableScrollLoading(true);
-
-        fetchMoreOrders()
-          .finally(() =>
-            setTableScrollLoading(false)
-          );
-      }
-    };
-
-    tableBody.addEventListener(
-      'scroll',
-      handleScroll
-    );
-
-    return () => {
-      tableBody.removeEventListener(
-        'scroll',
-        handleScroll
-      );
-    };
-  }, [
-    loading,
-    tableScrollLoading,
-    hasMore,
-    fetchMoreOrders
-  ]);
+  // Called by SystemOrdersTable's infinite scroll (useInfiniteScroll), which
+  // already prevents duplicate requests and fills tall screens.
+  const handleLoadMore = () => {
+    setTableScrollLoading(true);
+    return fetchMoreOrders().finally(() => setTableScrollLoading(false));
+  };
 
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
@@ -256,7 +212,7 @@ const CustomOrders = () => {
             onCancelOrder={handleCancelOrder}
             cancellingOrderId={cancellingOrderId}
             canManageOrders={canManageOrders}
-            onLoadMore={fetchMoreOrders}
+            onLoadMore={handleLoadMore}
           />
 
           {hasMore && tableScrollLoading && (

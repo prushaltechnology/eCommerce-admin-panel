@@ -8,9 +8,11 @@ export const getAllProducts = async (
   search = null,
   categoryId = null,
   isActive = null,
+  isArchived = false,
 ) => {
   try {
     const variables = { first };
+    if (isArchived) variables.isArchived = true;
     if (after) variables.after = after;
     if (search) variables.search = search;
     if (categoryId) variables.categoryId = Number(categoryId);

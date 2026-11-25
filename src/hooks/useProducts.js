@@ -27,6 +27,7 @@ export default function useProducts() {
       categoryId = null,
       isActive = null,
       append = false,
+      isArchived = false,
     ) => {
       setLoadingProducts(true);
       try {
@@ -36,6 +37,7 @@ export default function useProducts() {
           search,
           categoryId,
           isActive,
+          isArchived,
         );
         if (response.success) {
           setProducts((prevProducts) => {

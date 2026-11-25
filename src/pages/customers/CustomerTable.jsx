@@ -1,6 +1,7 @@
 import { DeleteOutlined, EditOutlined, EyeOutlined, } from '@ant-design/icons';
 import { Button, Popconfirm, Skeleton, Space, Switch, Table } from 'antd';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 
 const CustomerTable = ({
     customers,
@@ -18,26 +19,13 @@ const CustomerTable = ({
 }) => {
     const tableContainerRef = useRef(null);
 
-    useEffect(() => {
-        const tableBody = tableContainerRef.current?.querySelector('.ant-table-body');
-        if (!tableBody) return;
-
-        const handleScroll = (e) => {
-            const { scrollTop, scrollHeight, clientHeight } = e.target;
-            if (
-                scrollHeight - scrollTop <= clientHeight + 50 &&
-                hasMore &&
-                nextCursor &&
-                !loading &&
-                !fetchingMore
-            ) {
-                onLoadMore(nextCursor);
-            }
-        };
-
-        tableBody.addEventListener('scroll', handleScroll);
-        return () => tableBody.removeEventListener('scroll', handleScroll);
-    }, [hasMore, nextCursor, loading, fetchingMore, onLoadMore]);
+    useInfiniteScroll({
+      containerRef: tableContainerRef,
+      hasMore,
+      loading: loading || fetchingMore,
+      itemCount: customers.length,
+      onLoadMore: () => onLoadMore(nextCursor),
+    });
 
     const columns = [
         {

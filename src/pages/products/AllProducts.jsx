@@ -1,8 +1,12 @@
 import {
+  CloudUploadOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
-  PlusOutlined
+  InboxOutlined,
+  PlusOutlined,
+  RiseOutlined,
+  UndoOutlined
 } from '@ant-design/icons';
 import {
   Button,
@@ -20,9 +24,13 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createCategory } from '../../api/categories';
+import { setProductsArchived } from '../../api/productExcel';
+import BulkUploadModal from './BulkUploadModal';
+import DailyPriceModal from './DailyPriceModal';
 import ImagePreviewModal from '../../components/modals/ImagePreviewModal';
 import ProductModal from '../../components/modals/ProductModal';
 import usePermissions from '../../hooks/usePermissions';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import useProducts from '../../hooks/useProducts';
 
 const { Search } = Input;
@@ -59,6 +67,8 @@ const AllProducts = () => {
   const [nextCursor, setNextCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [fetchingMore, setFetchingMore] = useState(false);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [dailyPriceOpen, setDailyPriceOpen] = useState(false);
   const isFirstRender = useRef(true);
   const tableContainerRef = useRef(null);
 
@@ -80,22 +90,13 @@ const AllProducts = () => {
     return () => clearTimeout(timer);
   }, [categoryFilter, searchText, statusFilter]);
 
-  useEffect(() => {
-    const tableBody = tableContainerRef.current?.querySelector('.ant-table-body');
-    if (tableBody) {
-      const handleScroll = (e) => {
-        const { scrollTop, scrollHeight, clientHeight } = e.target;
-        if (scrollHeight - scrollTop <= clientHeight + 50) {
-          if (hasMore && !loading && !fetchingMore) {
-            loadProducts(nextCursor, false);
-          }
-        }
-      };
-
-      tableBody.addEventListener('scroll', handleScroll);
-      return () => tableBody.removeEventListener('scroll', handleScroll);
-    }
-  }, [hasMore, loading, fetchingMore, nextCursor]);
+  useInfiniteScroll({
+    containerRef: tableContainerRef,
+    hasMore,
+    loading: loading || fetchingMore,
+    itemCount: products.length,
+    onLoadMore: () => loadProducts(nextCursor, false),
+  });
 
   const loadCategories = async () => {
     try {
@@ -122,8 +123,9 @@ const AllProducts = () => {
       const categoryId = categoryFilter === 'all' ? null : categoryFilter;
       const search = searchText ? searchText : null;
 
-      const isActive = statusFilter === 'all' ? null : statusFilter === 'active';
-      const result = await fetchProducts(10, cursor, search, categoryId, isActive, !isNewSearch);
+      const isArchived = statusFilter === 'archived';
+      const isActive = statusFilter === 'all' || isArchived ? null : statusFilter === 'active';
+      const result = await fetchProducts(10, cursor, search, categoryId, isActive, !isNewSearch, isArchived);
 
       if (result) {
         if (isNewSearch) {
@@ -204,6 +206,16 @@ const AllProducts = () => {
       }
     } catch {
       message.error('Failed to delete product');
+    }
+  };
+
+  const handleArchive = async (record, archived) => {
+    try {
+      await setProductsArchived([record.id], archived);
+      message.success(archived ? `"${record.name}" archived` : `"${record.name}" restored`);
+      await loadProducts(null, true);
+    } catch (error) {
+      message.error(error.message || (archived ? 'Failed to archive product' : 'Failed to restore product'));
     }
   };
 
@@ -591,6 +603,10 @@ const AllProducts = () => {
           );
         }
 
+        if (record.isArchived) {
+          return <Tag>ARCHIVED</Tag>;
+        }
+
         return (
           <Tag color={getStatusColor(isActive)}>
             {isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -642,6 +658,25 @@ const AllProducts = () => {
                   onClick={() => handleEdit(record)}
                 />
 
+                {record.isArchived ? (
+                  <Button
+                    size="small"
+                    title="Restore"
+                    aria-label="Restore"
+                    icon={<UndoOutlined />}
+                    onClick={() => handleArchive(record, false)}
+                  />
+                ) : (
+                  <Popconfirm
+                    title="Archive product"
+                    description="It will be hidden from the store and from this list. You can restore it from the Archived filter."
+                    okText="Archive"
+                    onConfirm={() => handleArchive(record, true)}
+                  >
+                    <Button size="small" title="Archive" aria-label="Archive" icon={<InboxOutlined />} />
+                  </Popconfirm>
+                )}
+
                 <Popconfirm
                   title="Delete Product"
                   description="Are you sure you want to delete this product?"
@@ -683,6 +718,7 @@ const AllProducts = () => {
           > <Option value="all">All</Option>
             <Option value="active">Active</Option>
             <Option value="inactive">Inactive</Option>
+            <Option value="archived">Archived</Option>
           </Select>
           <Select
             size="small"
@@ -701,15 +737,36 @@ const AllProducts = () => {
           </Select>
         </div>
         {/* RIGHT SIDE BUTTON */}
-        {canManageProducts && (
-          <Button
-            type="primary"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={handleAdd}
-          >
-            Add Product
-          </Button>)}
+        <Space size="small" wrap>
+          {canViewProducts && (
+            <Button
+              size="small"
+              icon={<RiseOutlined />}
+              onClick={() => setDailyPriceOpen(true)}
+            >
+              Daily Prices
+            </Button>
+          )}
+          {canManageProducts && (
+            <Button
+              size="small"
+              icon={<CloudUploadOutlined />}
+              onClick={() => setBulkUploadOpen(true)}
+            >
+              Bulk Upload
+            </Button>
+          )}
+          {canManageProducts && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={handleAdd}
+            >
+              Add Product
+            </Button>
+          )}
+        </Space>
       </div>
 
       <Card style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -830,6 +887,23 @@ const AllProducts = () => {
 
           onCreateCategory={handleCreateCategory}
           onRefreshCategories={fetchCategories}
+        />
+      )}
+
+      {canManageProducts && (
+        <BulkUploadModal
+          open={bulkUploadOpen}
+          onClose={() => setBulkUploadOpen(false)}
+          onImported={() => loadProducts(null, true)}
+        />
+      )}
+
+      {canViewProducts && (
+        <DailyPriceModal
+          open={dailyPriceOpen}
+          onClose={() => setDailyPriceOpen(false)}
+          onUpdated={() => loadProducts(null, true)}
+          canUpdate={canManageProducts}
         />
       )}
 

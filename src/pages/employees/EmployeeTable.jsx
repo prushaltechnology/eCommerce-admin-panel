@@ -13,7 +13,8 @@ import {
     Tag,
     Typography
 } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import useInfiniteScroll from '../../hooks/useInfiniteScroll';
 import EditEmployeeModal from './EditEmployeeModal';
 import EmployeePermissionsModal from './EmployeePermissionsModal';
 
@@ -51,37 +52,13 @@ const EmployeeTable = ({
     const [editLoading, setEditLoading] = useState(false);
     const tableContainerRef = useRef(null);
 
-    useEffect(() => {
-        const tableBody =
-            tableContainerRef.current?.querySelector('.ant-table-body');
-
-        if (!tableBody) return;
-
-        const handleScroll = (e) => {
-            const { scrollTop, scrollHeight, clientHeight } = e.target;
-
-            if (
-                scrollHeight - scrollTop <= clientHeight + 50 &&
-                hasMore &&
-                nextCursor &&
-                !loading &&
-                !fetchingMore
-            ) {
-                onLoadMore(nextCursor);
-            }
-        };
-
-        tableBody.addEventListener('scroll', handleScroll);
-
-        return () =>
-            tableBody.removeEventListener('scroll', handleScroll);
-    }, [
-        hasMore,
-        nextCursor,
-        loading,
-        fetchingMore,
-        onLoadMore,
-    ]);
+    useInfiniteScroll({
+      containerRef: tableContainerRef,
+      hasMore,
+      loading: loading || fetchingMore,
+      itemCount: employees.length,
+      onLoadMore: () => onLoadMore(nextCursor),
+    });
 
     const handleEditSubmit = async (values) => {
         setEditLoading(true);

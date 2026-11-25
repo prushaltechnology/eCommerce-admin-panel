@@ -80,7 +80,7 @@ export default function App() {
           <Route path="*" element={<div>404 Not Found</div>} />
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
         </Route>
       </Routes>
     </BrowserRouter>

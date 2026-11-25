@@ -10,7 +10,8 @@ import {
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import {
   EyeOutlined,
   DeleteOutlined,
@@ -133,31 +134,18 @@ const SystemOrdersTable = ({
   onLoadMore,
 }) => {
   const tableRef = useRef(null);
-  const fetchingRef = useRef(false);
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancellationNote, setCancellationNote] = useState('');
   // ── Infinite scroll — lives here, next to the element that scrolls ──────────
-  useEffect(() => {
-    const tableBody = tableRef.current?.querySelector('.ant-table-body');
-    if (!tableBody) return;
-
-    const handleScroll = () => {
-      if (loading || tableScrollLoading || fetchingRef.current || !hasMore) return;
-
-      const { scrollTop, clientHeight, scrollHeight } = tableBody;
-      if (scrollTop + clientHeight >= scrollHeight - 80) {
-        fetchingRef.current = true;
-        onLoadMore?.()?.finally?.(() => {
-          fetchingRef.current = false;
-        });
-      }
-    };
-
-    tableBody.addEventListener('scroll', handleScroll, { passive: true });
-    return () => tableBody.removeEventListener('scroll', handleScroll);
-  }, [loading, tableScrollLoading, hasMore, onLoadMore]);
+  useInfiniteScroll({
+    containerRef: tableRef,
+    hasMore,
+    loading: loading || tableScrollLoading,
+    itemCount: orders.length,
+    onLoadMore: onLoadMore,
+  });
 
   const handleOpenCancelModal = (order) => {
     setSelectedOrder(order);
